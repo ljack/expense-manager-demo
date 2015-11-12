@@ -1,0 +1,69 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../bower_components/vaadin-icons/vaadin-icons.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animated-pages.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="overview-page.html">
+<link rel="import" href="login-page.html">
+<link rel="import" href="../styles/app-theme.html">
+<link rel="import" href="service.html">
+
+<dom-module id="expense-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <neon-animated-pages id="pages" class="fit" selected="[[selected]]">
+      <login-page service="[[service]]"></login-page>
+      <overview-page id="overview" service="[[service]]" logged-in="[[loggedIn]]"></overview-page>
+    </neon-animated-pages>
+
+    <expense-service id="service" service="{{service}}" logged-in="{{loggedIn}}"></expense-service>
+
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'expense-app',
+        properties: {
+          service: Object,
+          selected: {
+            type: Number,
+            notify: true,
+            computed: '_selectPage(loggedIn)'
+          },
+          loggedIn: {
+            type: Boolean,
+            notify: true
+          }
+        },
+
+        observers: [
+          '_initOverviewPage(token)'
+        ],
+
+        listeners: {
+          'logged-out': '_handleLogout'
+        },
+
+        ready: function() {
+          //this.$.service.server = 'http://' + window.location.hostname + ':8080/api/v1';
+        },
+
+        _handleLogout: function() {
+          this.service.logout();
+        },
+
+        _selectPage: function(loggedIn) {
+          return loggedIn ? 1 : 0;
+        }
+      });
+    })();
+  </script>
+</dom-module>
