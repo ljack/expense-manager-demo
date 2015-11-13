@@ -1229,7 +1229,7 @@ n=this.pointAttr[e]||r.pointAttr[e],e===this.state&&!i||this.selected&&"select"!
 </dom-module>
 <dom-module id="search-filters" assetpath="/">
   <template>
-    <style>.status,paper-input{height:48px;margin-left:4px}:host{display:block;padding:0 12px}.status{width:100%;padding-top:24px;padding-bottom:12px}paper-input{padding-top:12px;margin-right:4px}.merchants{min-width:200px}.status paper-checkbox{margin-right:8px;margin-left:8px;font-size:85%;--paper-checkbox-unchecked-color:var(--accent-color)}.checkboxes{display:inline-block;white-space:nowrap}.filters ::content label,.status .caption{font-weight:700!important;color:#999!important}.status .caption{margin-right:24px}@media (max-width:600px){#content .merchants{margin-bottom:12px}#content .status,#content .total{display:none}#content .date paper-input{width:45%;padding-bottom:36px}}@media (max-width:480px){:host{padding:0 16px}}</style>
+    <style>.status,paper-input{height:48px;margin-left:4px}:host{display:block;padding:0 12px}.status{width:100%;padding-top:24px;padding-bottom:12px}paper-input{padding-top:12px;margin-right:4px}.merchants{min-width:300px}.status paper-checkbox{margin-right:8px;margin-left:8px;font-size:85%;--paper-checkbox-unchecked-color:var(--accent-color)}.checkboxes{display:inline-block;white-space:nowrap}.filters ::content label,.status .caption{font-weight:700!important;color:#999!important}.status .caption{margin-right:24px}@media (max-width:600px){#content .merchants{margin-bottom:12px}#content .status,#content .total{display:none}#content .date paper-input{width:45%;padding-bottom:36px}}@media (max-width:480px){:host{padding:0 16px}}</style>
 
     <div id="content">
       <div class="filters layout horizontal wrap justified">
@@ -1239,7 +1239,7 @@ n=this.pointAttr[e]||r.pointAttr[e],e===this.state&&!i||this.selected&&"select"!
           <paper-input label="Merchant" value="{{filters.merchant}}"></paper-input>
         </div>
 
-        <div class="total layout horizontal center wrap">
+        <div class="total layout horizontal center">
           <paper-input label="Min ($)" value="{{filters.min}}" pattern="\d+" auto-validate="" error-message="Only numbers"></paper-input>
           <paper-input label="Max ($)" value="{{filters.max}}" pattern="\d+" auto-validate="" error-message="Only numbers"></paper-input>
         </div>
