@@ -181,7 +181,7 @@
           this.$.receiptupload.addEventListener('change', this.showReceipt.bind(this));
         },
 
-        _expenseChanged: function() {
+        _reset: function() {
           this.errorText = '';
           if (this.expense.id) {
             this.heading = 'Edit Expense';
