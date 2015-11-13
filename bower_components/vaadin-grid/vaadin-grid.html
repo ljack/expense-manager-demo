@@ -56,6 +56,9 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
     display: flex;
     -webkit-flex-direction: column;
     flex-direction: column;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
   :host(.vaadin-grid-loading) {
@@ -442,11 +445,14 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
 
   input[type="checkbox"]:indeterminate + label:after {
     content: "–";
-    left: -2px;
-    font-size: 13px;
+    font-family: arial;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1;
     text-align: center;
-    -webkit-transform: none;
-    transform: none;
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    transition: none;
   }
 
   /* Activation "splash" */
@@ -476,14 +482,9 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
     background-color: #03A9F4;
   }
 
-  /* Small adjustment for the checkbox in the header */
-  .vaadin-grid-header input[type="checkbox"] + label:after {
-    transition: none;
-  }
-
   #measureobject {
     width: 100% !important;
-    height: 100% !important;
+    height: 100%;
     z-index: -1 !important;
     pointer-events: none !important;
     position: absolute !important;
@@ -544,18 +545,10 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    opacity: 0;
-    background: #000;
-    transition: opacity 0.1s ease-in;
+    background: #fff;
+    box-shadow: 0 0 10px 4px #fff;
   }
 
-  .vaadin-grid-sidebar-button:hover:before {
-    opacity: 0.1;
-  }
-
-  .vaadin-grid-sidebar-button:active:before {
-    opacity: 0.2;
-  }
   .vaadin-grid-sidebar-button:after {
     content: url(img/ic_view_column_black_24px.svg);
     display: inline-block;
@@ -659,7 +652,6 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
 </style>
   <template>
     <iframe id="measureobject" class="vaadin-grid"></iframe>
-    <content></content>
   </template>
 </dom-module>
 
@@ -689,13 +681,13 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
                 _done = true;
               }
               // Restore whenReady
-              HTMLImports.whenReady = _whenReady
+              HTMLImports.whenReady = _whenReady;
               // Run original whenReady
               _whenReady(done);
             }
           }, 3);
-        }
-      }
+        };
+      };
     }
 
     Polymer({
@@ -787,39 +779,27 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
         },
 
         /**
-         * A function returning the items determining rows in the grid.
+         * An array or a function containing or returning items determining
+         * rows in the grid.
          *
-         * Example:
-         * ```
-         * grid.datasource = function(req) {
-         *  req.success(['foo', 'bar'], 2);
-         * };
-         * ```
-         *
-         * @property {function} datasource
-         * @type {function}
-         */
-        datasource: {
-          type: Object,
-          observer: '_datasourceChanged'
-        },
-
-        /**
-         * An array containing items determining rows in the grid.
-         *
-         *  Example:
+         *  Examples:
          *  ```
          *  grid.items = [
          *      ["horse", 150, "domestic"],
          *      ["wolf", 100, "wild"]
          *  ];
          *  ```
+         *  ```
+         *  grid.items = function(params, callback) {
+         *    callback(['foo', 'bar'], 2);
+         *  };
+         *  ```
          *
-         * @property {Array<Object>} items
-         * @type {Array<Object>}
+         * @property {(Array<Object>|function)} items
+         * @type {(Array<Object>|function)}
          */
         items: {
-          type: Array,
+          type: Object,
           observer: '_itemsChanged'
         },
 
@@ -923,23 +903,21 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
         /**
          * A change in the selection mode.
          *
-         * @event selectionmodechange
+         * @event selection-mode-changed
          */
         'selectionmodechange': '_onSelectionModeChange'
       },
 
-      _datasourceChanged: function(datasource) {
-        this._grid.setDataSource(datasource);
-      },
-
       _itemsChanged: function(items) {
-        if(Array.isArray(items)) {
-          this._grid.setDataSource(function(req) {
-            var array = items.slice(req.index, req.index + req.count);
-            req.success(array, items.length);
+        if (Array.isArray(items)) {
+          this._grid.setDataSource(function(params, callback) {
+            var array = items.slice(params.index, params.index + params.count);
+            callback(array, items.length);
           });
+        } else if (typeof items === 'function') {
+          this._grid.setDataSource(items);
         } else {
-          throw new Error('Unknown items type: ' + items + '. Arrays are supported only.');
+          throw new Error('Unknown items type: ' + items + '. Only arrays and functions are supported.');
         }
       },
 
@@ -963,7 +941,18 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
             this.attributeChanged(this.attributes[i].nodeName, null, this.attributes[i].nodeValue);
           }
         });
-        this._grid.init(this, Polymer.dom(this).querySelector("table"), Polymer.dom(this.root));
+        this._grid.init(this, this._findTableElement(Polymer.dom(this).children), Polymer.dom(this.root), this.$.measureobject);
+      },
+
+      _findTableElement: function(nodes) {
+        for (var i = 0; i < nodes.length; i++) {
+          if (nodes[i].nodeName === 'TABLE') {
+            return nodes[i];
+          } else if (nodes[i].nodeName === 'CONTENT') {
+            var contentNodes = Polymer.dom(nodes[i]).getDistributedNodes();
+            return this._findTableElement(contentNodes);
+          }
+        }
       },
 
       _bindResizeListener: function() {
@@ -1153,34 +1142,23 @@ More examples available at https://cdn.vaadin.com/vaadin-elements/latest/vaadin-
       },
 
       /**
-       * Returns an array of the currently visible columns in the grid.
-       * No hidden columns included.
-       *
-       * @property {Array<Column>} visibleColumns
-       * @type {Array<Column>}
-       */
-      get visibleColumns() {
-        return this._grid.getVisibleColumns();
-      },
-
-      /**
        * The number of visible rows in the grid. Implicitly sets the height
        * in the inline style, overriding any previous height. Setting style.height
        * in this case should be ignored if possible.
        *
-       * Attribute: `rows`
+       * Attribute: `visible-rows`
        *
-       * @property {number} rows
+       * @property {number} visibleRows
        * @default 10
        * @type {number}
        */
-      get rows() {
-        var rows = this._grid.getRows();
+      get visibleRows() {
+        var rows = this._grid.getVisibleRows();
         return rows > 0 ? rows : undefined;
       },
-      set rows(rows) {
-        this._grid.setRows(rows);
-        this.reflectPropertyToAttribute("rows");
+      set visibleRows(visibleRows) {
+        this._grid.setVisibleRows(visibleRows);
+        this.reflectPropertyToAttribute("visibleRows");
       },
 
       /**
