@@ -1,0 +1,24 @@
+CACHE MANIFEST
+
+
+CACHE:
+demodata.json
+favicon.ico
+index.html
+robots.txt
+fonts/Vaadin-Icons.eot
+fonts/Vaadin-Icons.svg
+fonts/Vaadin-Icons.ttf
+fonts/Vaadin-Icons.woff
+elements/elements.html
+images/app-icon-192.png
+images/app-icon.svg
+images/default-receipt.jpg
+styles/app-theme.html
+styles/main.css
+
+
+NETWORK:
+*
+
+# hash: 6e5c7b14c9a5be2401154348241757afbd08f5ceec14194cc412e9d9de72d736
