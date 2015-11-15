@@ -51,7 +51,7 @@
         overflow-x: scroll;
       }
 
-      #receipt img{
+      #receipt img {
         max-width: 400px;
       }
 
@@ -129,7 +129,7 @@
           var _this = this;
 
           if (receipt.firstChild) {
-            receipt.removeChild(receipt.firstChild);
+            Polymer.dom(receipt).removeChild(receipt.firstChild);
           }
 
           if (this.preview) {
@@ -155,14 +155,14 @@
         },
 
         _updateImage: function() {
+          var receipt = this.$.receipt;
+          if (receipt.firstChild) {
+            Polymer.dom(receipt).removeChild(receipt.firstChild);
+          }
+
           if (this.src) {
-            var receipt = this.$.receipt;
-
-            if (receipt.firstChild) {
-              Polymer.dom(receipt).removeChild(receipt.firstChild);
-            }
-
             var img = document.createElement('img');
+
             img.setAttribute('src', this.src);
 
             Polymer.dom(receipt).appendChild(img);

@@ -210,9 +210,12 @@
           } else {
             this.heading = 'Add Expense';
             this.$.preview.src = null;
-            this.$.form.reset();
+            this.$.merchant.value = '';
+            this.$.total.value = '';
+            this.$.comment.value = '';
             this.$.date.value = moment().format('YYYY-MM-DD');
             this.$.receiptupload.setAttribute('required', true);
+            this._resetValidationErrors();
           }
           this.$.delete.hidden = !(this.expense.id && this.expense.status === 'new');
         },
