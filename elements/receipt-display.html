@@ -87,7 +87,8 @@
 
     <div id="content" class="content flex layout vertical center-center">
       <paper-menu-button class="action-menu">
-        <paper-icon-button icon="vaadin-icons:ellipsis-v" class="dropdown-trigger"></paper-icon-button>
+        <paper-icon-button icon="vaadin-icons:ellipsis-v"
+                           class="dropdown-trigger"></paper-icon-button>
         <paper-menu class="dropdown-content">
           <paper-item on-tap="_fireUpload">Upload new receipt</paper-item>
         </paper-menu>
@@ -117,19 +118,30 @@
 
         _updateCanvas: function() {
           var receipt = this.$.receipt;
+          var _this = this;
 
           if (receipt.firstChild) {
             receipt.removeChild(receipt.firstChild);
           }
 
           if (this.src) {
-            loadImage(this.src, function(img) {
-              receipt.appendChild(img);
-            }, {
+            var options = {
               maxWidth: 400,
               canvas: true,
               orientation: true
+            };
+
+            loadImage.parseMetaData(this.src, function(data) {
+              if (data.exif) {
+                options.orientation = data.exif.get('Orientation');
+                console.log('Orientation: ' + options.orientation);
+              }
+
+              loadImage(_this.src, function(img) {
+                receipt.appendChild(img);
+              }, options);
             });
+
           }
 
           this.toggleClass('has-receipt', this.src, this.$.content);
