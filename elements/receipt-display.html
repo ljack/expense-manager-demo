@@ -51,6 +51,10 @@
         overflow-x: scroll;
       }
 
+      #receipt img{
+        max-width: 400px;
+      }
+
       .content.has-receipt .caption {
         display: inline;
       }
@@ -112,6 +116,10 @@
         properties: {
           src: {
             type: String,
+            observer: '_updateImage'
+          },
+          preview: {
+            type: Object,
             observer: '_updateCanvas'
           }
         },
@@ -124,26 +132,41 @@
             receipt.removeChild(receipt.firstChild);
           }
 
-          if (this.src) {
+          if (this.preview) {
             var options = {
               maxWidth: 400,
               canvas: true,
               orientation: true
             };
 
-            loadImage.parseMetaData(this.src, function(data) {
+            loadImage.parseMetaData(this.preview, function(data) {
               if (data.exif) {
                 options.orientation = data.exif.get('Orientation');
-                console.log('Orientation: ' + options.orientation);
               }
 
-              loadImage(_this.src, function(img) {
+              loadImage(_this.preview, function(img) {
                 receipt.appendChild(img);
               }, options);
             });
 
           }
 
+          this.toggleClass('has-receipt', this.preview, this.$.content);
+        },
+
+        _updateImage: function() {
+          if (this.src) {
+            var receipt = this.$.receipt;
+
+            if (receipt.firstChild) {
+              Polymer.dom(receipt).removeChild(receipt.firstChild);
+            }
+
+            var img = document.createElement('img');
+            img.setAttribute('src', this.src);
+
+            Polymer.dom(receipt).appendChild(img);
+          }
           this.toggleClass('has-receipt', this.src, this.$.content);
         },
 
