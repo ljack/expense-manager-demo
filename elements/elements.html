@@ -1518,7 +1518,7 @@ n=this.pointAttr[e]||r.pointAttr[e],e===this.state&&!i||this.selected&&"select"!
     </div>
 
   </template>
-  <script>!function(){"use strict";Polymer({is:"receipt-display",properties:{src:{type:String,observer:"_updateCanvas"}},_updateCanvas:function(){var i=this.$.receipt;i.firstChild&&i.removeChild(i.firstChild),this.src&&loadImage(this.src,function(t){i.appendChild(t)},{maxWidth:400,canvas:!0}),this.toggleClass("has-receipt",this.src,this.$.content)},_fireUpload:function(){this.fire("upload-requested")}})}();</script>
+  <script>!function(){"use strict";Polymer({is:"receipt-display",properties:{src:{type:String,observer:"_updateCanvas"}},_updateCanvas:function(){var i=this.$.receipt;i.firstChild&&i.removeChild(i.firstChild),this.src&&loadImage(this.src,function(t){i.appendChild(t)},{maxWidth:400,canvas:!0,orientation:!0}),this.toggleClass("has-receipt",this.src,this.$.content)},_fireUpload:function(){this.fire("upload-requested")}})}();</script>
 </dom-module>
 <dom-module id="expense-editor" assetpath="/">
   <template>
