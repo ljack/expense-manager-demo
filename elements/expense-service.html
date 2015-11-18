@@ -11,11 +11,13 @@ of having every component deal with it separately.
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
 <link rel="import" href="../scripts/moment-js.html">
+<link rel="import" href="offline-detector.html">
 
 <dom-module id="expense-service">
   <template>
     <iron-localstorage id="tokenStorage" name="auth-token" value="{{token}}"></iron-localstorage>
     <iron-localstorage id="expenses" name="expense-cache" value="{{expenses}}"></iron-localstorage>
+    <offline-detector online="{{online}}"></offline-detector>
   </template>
   <script>
     (function() {
@@ -38,7 +40,11 @@ of having every component deal with it separately.
             type: Object,
             notify: true
           },
-          expenses: Array
+          expenses: Array,
+          online: {
+            type: Boolean,
+            value: true
+          }
         },
 
         ready: function() {
@@ -55,7 +61,7 @@ of having every component deal with it separately.
         },
 
         login: function(username, password) {
-          if (this.server) {
+          if (this.server && this.online) {
             return this._loginToServer(username, password);
           } else {
             return this._loginLocal(username, password);
@@ -68,7 +74,7 @@ of having every component deal with it separately.
         },
 
         getOverviewData: function() {
-          if (this.server) {
+          if (this.server && this.online) {
             return this._getOverviewDataFromServer();
           } else {
             return this._getOverviewDataLocal();
@@ -76,7 +82,7 @@ of having every component deal with it separately.
         },
 
         getExpenses: function(params) {
-          if (this.server) {
+          if (this.server && this.online) {
             return this._getExpensesFromServer(params);
           } else {
             return this._getExpensesLocal(params);
@@ -84,7 +90,7 @@ of having every component deal with it separately.
         },
 
         saveExpense: function(id, formData, rawData) {
-          if (this.server) {
+          if (this.server && this.online) {
             return this._saveExpenseToServer(id, formData);
           } else {
             return this._saveExpenseLocal(id, rawData);
@@ -92,7 +98,7 @@ of having every component deal with it separately.
         },
 
         deleteExpense: function(id) {
-          if (this.server) {
+          if (this.server && this.online) {
             return this._deleteExpenseFromServer(id);
           } else {
             return this._deleteExpenseLocal(id);
@@ -100,8 +106,8 @@ of having every component deal with it separately.
         },
 
         getReceiptURL: function(id) {
-          if (this.server) {
-            return this.server + '/expenses/' + id + '/receipt.jpg?token=' + this.token;
+          if (this.server && this.online) {
+            return this.server + '/expenses/' + id + '/receipt.png?token=' + this.token;
           } else {
             var expense = this._findExpense(id);
             if (expense && expense.receipt && expense.receipt.indexOf('data:') >= 0) {
@@ -117,7 +123,7 @@ of having every component deal with it separately.
           return new Promise(function(resolve, reject) {
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
-              if (xhr.readyState === XMLHttpRequest.DONE) {
+              if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
                   var json = JSON.parse(xhr.responseText);
                   if (json.token) {
@@ -386,7 +392,7 @@ of having every component deal with it separately.
           return new Promise(function(resolve, reject) {
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
-              if (xhr.readyState === XMLHttpRequest.DONE) {
+              if (xhr.readyState === 4) {
                 if (xhr.status >= 200 && xhr.status < 300) {
                   var json = JSON.parse(xhr.responseText);
                   resolve(json);
@@ -409,7 +415,7 @@ of having every component deal with it separately.
           return new Promise(function(resolve, reject) {
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
-              if (xhr.readyState === XMLHttpRequest.DONE) {
+              if (xhr.readyState === 4) {
                 if (xhr.status >= 200 && xhr.status < 300) {
                   var json = JSON.parse(xhr.responseText);
                   if (json.success) {
@@ -441,7 +447,6 @@ of having every component deal with it separately.
             } else if (i > 15) {
               status = 'in_progress';
             }
-
             expenses.push({
               id: new Date().getTime(),
               user: 'demo',
