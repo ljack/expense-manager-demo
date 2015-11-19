@@ -88,13 +88,11 @@
                            class="about-button"></paper-icon-button>
         <paper-button class="logout-button" on-tap="_logout">Logout</paper-button>
       </paper-toolbar>
-      <template is="dom-if" if="[[loggedIn]]" restamp>
         <div class="content fit">
           <overview-panel id="overviewPanel" class="overview"
                           service="[[service]]"></overview-panel>
           <expenses-list id="list" class="expenses flex" service="[[service]]"></expenses-list>
         </div>
-      </template>
     </paper-header-panel>
     <expense-editor service="[[service]]" id="expenseEditor"></expense-editor>
     <paper-toast id="saveNotification" text="Expense saved"></paper-toast>
@@ -109,7 +107,10 @@
 
         properties: {
           service: Object,
-          loggedIn: Boolean,
+          loggedIn: {
+            type: Boolean,
+            observer: '_loggedIn'
+          },
           animationConfig: {
             value: function() {
               return {
@@ -160,6 +161,10 @@
           this.$.expenseEditor.close();
           this.update();
           this.$.saveNotification.show();
+        },
+
+        _loggedIn: function() {
+          this.update();
         },
 
         _logout: function() {
