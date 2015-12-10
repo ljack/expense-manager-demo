@@ -2,8 +2,6 @@
 <link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
 <link rel="import" href="../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
-<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../scripts/accounting-js.html">
 <link rel="import" href="../scripts/moment-js.html">
 <link rel="import" href="search-filters.html">
@@ -15,50 +13,52 @@
         display: block;
         position: relative;
         overflow: hidden;
-        @apply(--layout-vertical);
+        display: flex;
+        flex-direction: column;
       }
-
+      
       #add-button {
         position: absolute;
         right: 32px;
         bottom: 32px;
         z-index: 2;
       }
-
+      
       #expenses {
+        flex: 1;
         color: var(--primary-text-color);
         font-weight: 300;
       }
-
-      #expenses ::content thead.vaadin-grid-header th,
+      
+      #expenses::content thead.vaadin-grid-header th,
       #expenses /deep/ thead.vaadin-grid-header th {
         background: var(--dark-primary-color);
         color: #ccc;
         font-size: 1.2em;
         font-weight: 400;
       }
-
-      vaadin-grid ::content tr.vaadin-grid-row-stripe td,
+      
+      vaadin-grid::content tr.vaadin-grid-row-stripe td,
       vaadin-grid /deep/ tr.vaadin-grid-row-stripe td {
         background: #F7F8F8;
       }
-
-      vaadin-grid ::content td.status-new,
+      
+      vaadin-grid::content td.status-new,
       vaadin-grid /deep/ td.status-new {
         font-weight: bold;
       }
-
-      vaadin-grid ::content td.status-reimbursed span,
+      
+      vaadin-grid::content td.status-reimbursed span,
       vaadin-grid /deep/ td.status-reimbursed span {
         opacity: 0.4;
       }
-
-      #expenses ::content thead.vaadin-grid-header th.last-frozen,
+      
+      #expenses::content thead.vaadin-grid-header th.last-frozen,
       #expenses /deep/ thead.vaadin-grid-header th.last-frozen {
         border-right: 1px solid #2A3A42;
       }
-
-      #expenses ::content .vaadin-grid-header.vaadin-grid .sort-asc.vaadin-grid:after,
+      
+      #expenses::content .vaadin-grid-header.vaadin-grid .sort-asc.vaadin-grid:after,
       #expenses /deep/ .vaadin-grid-header.vaadin-grid .sort-asc.vaadin-grid:after {
         content: "\e7bc " attr(sort-order);
         font-family: Vaadin-Icons;
@@ -72,8 +72,8 @@
         -webkit-font-smoothing: antialiased;
         color: var(--default-primary-color);
       }
-
-      #expenses ::content .vaadin-grid-header.vaadin-grid .sort-desc.vaadin-grid:after,
+      
+      #expenses::content .vaadin-grid-header.vaadin-grid .sort-desc.vaadin-grid:after,
       #expenses /deep/ .vaadin-grid-header.vaadin-grid .sort-desc.vaadin-grid:after {
         content: "\e7c3 " attr(sort-order);
         font-family: Vaadin-Icons;
@@ -92,14 +92,14 @@
 
     <search-filters filters="{{filters}}"></search-filters>
 
-    <vaadin-grid class="flex" id="expenses" frozen-columns="1">
+    <vaadin-grid id="expenses" frozen-columns="1">
       <table>
         <colgroup>
-          <col header-text="Date" name="date" width="120" sortable/>
-          <col header-text="Merchant" name="merchant" width="200" sortable/>
-          <col header-text="Total" name="total" width="150" sortable/>
-          <col header-text="Status" name="status" width="200" sortable/>
-          <col header-text="Comment" name="comment" sortable/>
+          <col name="date" width="120" sortable/>
+          <col name="merchant" width="200" sortable/>
+          <col name="total" width="150" sortable/>
+          <col name="status" width="150" sortable/>
+          <col name="comment" sortable/>
         </colgroup>
       </table>
     </vaadin-grid>
@@ -197,7 +197,7 @@
         update: function() {
           var grid = this.$.expenses;
           if (grid.items) {
-            grid.clearCache();
+            grid.refreshItems();
             grid.scrollToStart();
           } else {
             this._setDataSource();

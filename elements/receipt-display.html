@@ -1,5 +1,4 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
@@ -14,10 +13,16 @@
     <style>
       :host {
         display: block;
-        @apply(--layout-vertical);
+        display: flex;
+        flex-direction: column;
       }
-
+      
       .content {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
         box-sizing: border-box;
         background: var(--light-primary-color);
         border: 2px dashed var(--accent-color);
@@ -25,40 +30,41 @@
         min-height: 64px;
         padding: 8px;
       }
-
-      /*Shady DOM does shady stuff, the plain .content selector overrides this without the extra .content */
+      /*Shady DOM does shady stuff, the plain .content selector overrides
+      this without the extra .content */
+      
       .content.content.has-receipt {
         background: #F7F8F8;
         border: none;
       }
-
+      
       .upload-button {
         font-weight: 400;
       }
-
+      
       .content.has-receipt .upload-button {
         display: none;
       }
-
+      
       .caption {
         text-transform: uppercase;
         display: none;
         font-weight: 600;
       }
-
+      
       #receipt {
         max-width: 100%;
         overflow-x: scroll;
       }
-
+      
       #receipt img {
         max-width: 400px;
       }
-
+      
       .content.has-receipt .caption {
         display: inline;
       }
-
+      
       .action-menu {
         position: absolute;
         top: 0;
@@ -66,11 +72,11 @@
         display: none;
         color: var(--accent-color);
       }
-
+      
       .content.has-receipt .action-menu {
         display: block;
       }
-
+      
       iron-icon {
         fill: var(--accent-color);
         margin-top: -5px;
@@ -78,7 +84,7 @@
         --iron-icon-height: 16px;
         --iron-icon-width: 16px;
       }
-
+      
       @media (min-width: 600px) {
         #receipt {
           max-height: 70vh;
@@ -89,10 +95,9 @@
 
     <span class="caption">Receipt</span>
 
-    <div id="content" class="content flex layout vertical center-center">
+    <div id="content" class="content">
       <paper-menu-button class="action-menu">
-        <paper-icon-button icon="vaadin-icons:ellipsis-v"
-                           class="dropdown-trigger"></paper-icon-button>
+        <paper-icon-button icon="vaadin-icons:ellipsis-v" class="dropdown-trigger"></paper-icon-button>
         <paper-menu class="dropdown-content">
           <paper-item on-tap="_fireUpload">Upload new receipt</paper-item>
         </paper-menu>
@@ -160,7 +165,9 @@
             Polymer.dom(receipt).removeChild(receipt.firstChild);
           }
 
-          if (this.src) {
+          if (!this.online && this.src) {
+            Polymer.dom(receipt).innerHTML = 'Receipt unavailable when offline';
+          } else if (this.src) {
             var img = document.createElement('img');
 
             img.setAttribute('src', this.src);

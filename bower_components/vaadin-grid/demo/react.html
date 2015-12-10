@@ -57,6 +57,7 @@ layout: page
                 if (vGrid.selection) {
                   // Assign the data source
                   vGrid.items = _this.items;
+                  vGrid.size = 1000;
 
                   // Bind selection listener
                   vGrid.addEventListener("selected-items-changed", _this.onRowSelect);
@@ -67,10 +68,10 @@ layout: page
 
                   // Define columns
                   vGrid.columns = [
-                    {name: "user.picture.thumbnail", headerContent: "", width: 100, renderer: pictureRenderer },
-                    {name: "user.name.first", headerContent: "First Name" },
-                    {name: "user.name.last", headerContent: "Last Name" },
-                    {name: "user.email", headerContent: "Email" },
+                    {name: "user.picture.thumbnail", width: 100, renderer: pictureRenderer},
+                    {name: "user.name.first"},
+                    {name: "user.name.last"},
+                    {name: "user.email"},
                   ];
 
                 } else {
@@ -84,7 +85,7 @@ layout: page
               xhr.onreadystatechange = function() {
                 if (xhr.readyState == XMLHttpRequest.DONE ) {
                   if(xhr.status == 200){
-                    callback(JSON.parse(xhr.responseText).results, 1000);
+                    callback(JSON.parse(xhr.responseText).results);
                   }
                 }
               };

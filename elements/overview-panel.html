@@ -1,7 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/vaadin-charts/vaadin-bar-chart.html">
-<link rel="import" href="../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
-<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
 <dom-module id="overview-panel">
@@ -11,7 +9,12 @@
         display: block;
         background: var(--light-primary-color);
       }
-
+      
+      #container {
+        display: flex;
+        flex-direction: column;
+      }
+      
       .total {
         background: var(--default-primary-color);
         color: var(--text-primary-color);
@@ -21,52 +24,54 @@
         font-weight: 500;
         font-size: 18px;
         line-height: 1.4;
-        @apply(--layout-vertical);
-        @apply(--layout-center);
-        @apply(--layout-center-justified);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
       }
-
+      
       .total .sum {
         font-size: 32px;
         font-weight: 200;
       }
-
+      
       .chart-title {
         font-weight: 500;
         text-align: center;
         font-size: 18px;
       }
-
+      
       .chart {
+        flex: 1;
         height: 400px;
       }
-
-      #barchart ::content text {
+      
+      #barchart::content text {
         font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       }
-
+      
       @media (max-width: 600px) {
         .chart {
           display: none;
         }
-
         .total {
           height: 64px;
-          @apply(--layout-horizontal);
+          -ms-flex-direction: row;
+          -webkit-flex-direction: row;
+          flex-direction: row;
         }
-
         .total .sum {
           margin-left: 12px;
         }
       }
     </style>
 
-    <div class="layout vertical" id="container">
+    <div id="container">
       <div class="total">
         <div>Total</div>
         <div class="sum">[[totalOwed]]</div>
       </div>
-      <div class="chart flex">
+      <div class="chart">
         <h2 class="chart-title">Last 12 months</h2>
         <vaadin-bar-chart id="barchart">
           <title>
