@@ -30342,8 +30342,6 @@ value. `setMax` should move the slider to the maximum value.
             var expense = this._findExpense(id);
             if (expense && expense.receipt && expense.receipt.indexOf('default') >= 0) {
               return 'images/default-receipt.png';
-            } else {
-              return 'images/receipt-placeholder.png';
             }
           }
         },
@@ -30662,7 +30660,9 @@ value. `setMax` should move the slider to the maximum value.
                 expense.total = data.total;
                 expense.date = data.date;
                 expense.comment = data.comment;
-                expense.receipt = data.receipt;
+                if (data.receipt) {
+                  expense.receipt = data.receipt;
+                }
                 expense.pending = 'save';
               } else {
                 // Temporary id for locally saved expenses
