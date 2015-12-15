@@ -7608,7 +7608,10 @@ this.fire('dom-change');
     };
 
     --layout-horizontal: {
-      @apply(--layout);
+      /* @apply(--layout); */
+      display: -ms-flexbox;
+      display: -webkit-flex;
+      display: flex;
 
       -ms-flex-direction: row;
       -webkit-flex-direction: row;
@@ -7616,15 +7619,16 @@ this.fire('dom-change');
     };
 
     --layout-horizontal-reverse: {
-      @apply(--layout);
-
       -ms-flex-direction: row-reverse;
       -webkit-flex-direction: row-reverse;
       flex-direction: row-reverse;
     };
 
     --layout-vertical: {
-      @apply(--layout);
+      /* @apply(--layout); */
+      display: -ms-flexbox;
+      display: -webkit-flex;
+      display: flex;
 
       -ms-flex-direction: column;
       -webkit-flex-direction: column;
@@ -7632,8 +7636,6 @@ this.fire('dom-change');
     };
 
     --layout-vertical-reverse: {
-      @apply(--layout);
-
       -ms-flex-direction: column-reverse;
       -webkit-flex-direction: column-reverse;
       flex-direction: column-reverse;
@@ -7790,8 +7792,13 @@ this.fire('dom-change');
     };
 
     --layout-center-center: {
-      @apply(--layout-center);
-      @apply(--layout-center-justified);
+      /* @apply(--layout-center --layout-center-justified); */
+      -ms-flex-align: center;
+      -webkit-align-items: center;
+      align-items: center;
+      -ms-flex-pack: center;
+      -webkit-justify-content: center;
+      justify-content: center;
     };
 
     /* self alignment */
@@ -7847,11 +7854,6 @@ this.fire('dom-change');
     --layout-scroll: {
       -webkit-overflow-scrolling: touch;
       overflow: auto;
-    };
-
-    --layout-fullbleed: {
-      margin: 0;
-      height: 100vh;
     };
 
     /* fixed position */
@@ -9038,798 +9040,6 @@ this.fire('dom-change');
 </script>
 
 
-
-
-<script>
-
-/**
-Polymer.IronFitBehavior fits an element in another element using `max-height` and `max-width`, and
-optionally centers it in the window or another element.
-
-The element will only be sized and/or positioned if it has not already been sized and/or positioned
-by CSS.
-
-CSS properties               | Action
------------------------------|-------------------------------------------
-`position` set               | Element is not centered horizontally or vertically
-`top` or `bottom` set        | Element is not vertically centered
-`left` or `right` set        | Element is not horizontally centered
-`max-height` or `height` set | Element respects `max-height` or `height`
-`max-width` or `width` set   | Element respects `max-width` or `width`
-
-@demo demo/index.html
-@polymerBehavior
-*/
-
-  Polymer.IronFitBehavior = {
-
-    properties: {
-
-      /**
-       * The element that will receive a `max-height`/`width`. By default it is the same as `this`,
-       * but it can be set to a child element. This is useful, for example, for implementing a
-       * scrolling region inside the element.
-       * @type {!Element}
-       */
-      sizingTarget: {
-        type: Object,
-        value: function() {
-          return this;
-        }
-      },
-
-      /**
-       * The element to fit `this` into.
-       */
-      fitInto: {
-        type: Object,
-        value: window
-      },
-
-      /**
-       * Set to true to auto-fit on attach.
-       */
-      autoFitOnAttach: {
-        type: Boolean,
-        value: false
-      },
-
-      /** @type {?Object} */
-      _fitInfo: {
-        type: Object
-      }
-
-    },
-
-    get _fitWidth() {
-      var fitWidth;
-      if (this.fitInto === window) {
-        fitWidth = this.fitInto.innerWidth;
-      } else {
-        fitWidth = this.fitInto.getBoundingClientRect().width;
-      }
-      return fitWidth;
-    },
-
-    get _fitHeight() {
-      var fitHeight;
-      if (this.fitInto === window) {
-        fitHeight = this.fitInto.innerHeight;
-      } else {
-        fitHeight = this.fitInto.getBoundingClientRect().height;
-      }
-      return fitHeight;
-    },
-
-    get _fitLeft() {
-      var fitLeft;
-      if (this.fitInto === window) {
-        fitLeft = 0;
-      } else {
-        fitLeft = this.fitInto.getBoundingClientRect().left;
-      }
-      return fitLeft;
-    },
-
-    get _fitTop() {
-      var fitTop;
-      if (this.fitInto === window) {
-        fitTop = 0;
-      } else {
-        fitTop = this.fitInto.getBoundingClientRect().top;
-      }
-      return fitTop;
-    },
-
-    attached: function() {
-      if (this.autoFitOnAttach) {
-        if (window.getComputedStyle(this).display === 'none') {
-          setTimeout(function() {
-            this.fit();
-          }.bind(this));
-        } else {
-          this.fit();
-        }
-      }
-    },
-
-    /**
-     * Fits and optionally centers the element into the window, or `fitInfo` if specified.
-     */
-    fit: function() {
-      this._discoverInfo();
-      this.constrain();
-      this.center();
-    },
-
-    /**
-     * Memoize information needed to position and size the target element.
-     */
-    _discoverInfo: function() {
-      if (this._fitInfo) {
-        return;
-      }
-      var target = window.getComputedStyle(this);
-      var sizer = window.getComputedStyle(this.sizingTarget);
-      this._fitInfo = {
-        inlineStyle: {
-          top: this.style.top || '',
-          left: this.style.left || ''
-        },
-        positionedBy: {
-          vertically: target.top !== 'auto' ? 'top' : (target.bottom !== 'auto' ?
-            'bottom' : null),
-          horizontally: target.left !== 'auto' ? 'left' : (target.right !== 'auto' ?
-            'right' : null),
-          css: target.position
-        },
-        sizedBy: {
-          height: sizer.maxHeight !== 'none',
-          width: sizer.maxWidth !== 'none'
-        },
-        margin: {
-          top: parseInt(target.marginTop, 10) || 0,
-          right: parseInt(target.marginRight, 10) || 0,
-          bottom: parseInt(target.marginBottom, 10) || 0,
-          left: parseInt(target.marginLeft, 10) || 0
-        }
-      };
-    },
-
-    /**
-     * Resets the target element's position and size constraints, and clear
-     * the memoized data.
-     */
-    resetFit: function() {
-      if (!this._fitInfo || !this._fitInfo.sizedBy.height) {
-        this.sizingTarget.style.maxHeight = '';
-        this.style.top = this._fitInfo ? this._fitInfo.inlineStyle.top : '';
-      }
-      if (!this._fitInfo || !this._fitInfo.sizedBy.width) {
-        this.sizingTarget.style.maxWidth = '';
-        this.style.left = this._fitInfo ? this._fitInfo.inlineStyle.left : '';
-      }
-      if (this._fitInfo) {
-        this.style.position = this._fitInfo.positionedBy.css;
-      }
-      this._fitInfo = null;
-    },
-
-    /**
-     * Equivalent to calling `resetFit()` and `fit()`. Useful to call this after the element,
-     * the window, or the `fitInfo` element has been resized.
-     */
-    refit: function() {
-      this.resetFit();
-      this.fit();
-    },
-
-    /**
-     * Constrains the size of the element to the window or `fitInfo` by setting `max-height`
-     * and/or `max-width`.
-     */
-    constrain: function() {
-      var info = this._fitInfo;
-      // position at (0px, 0px) if not already positioned, so we can measure the natural size.
-      if (!this._fitInfo.positionedBy.vertically) {
-        this.style.top = '0px';
-      }
-      if (!this._fitInfo.positionedBy.horizontally) {
-        this.style.left = '0px';
-      }
-      if (!this._fitInfo.positionedBy.vertically || !this._fitInfo.positionedBy.horizontally) {
-        // need position:fixed to properly size the element
-        this.style.position = 'fixed';
-      }
-      // need border-box for margin/padding
-      this.sizingTarget.style.boxSizing = 'border-box';
-      // constrain the width and height if not already set
-      var rect = this.getBoundingClientRect();
-      if (!info.sizedBy.height) {
-        this._sizeDimension(rect, info.positionedBy.vertically, 'top', 'bottom', 'Height');
-      }
-      if (!info.sizedBy.width) {
-        this._sizeDimension(rect, info.positionedBy.horizontally, 'left', 'right', 'Width');
-      }
-    },
-
-    _sizeDimension: function(rect, positionedBy, start, end, extent) {
-      var info = this._fitInfo;
-      var max = extent === 'Width' ? this._fitWidth : this._fitHeight;
-      var flip = (positionedBy === end);
-      var offset = flip ? max - rect[end] : rect[start];
-      var margin = info.margin[flip ? start : end];
-      var offsetExtent = 'offset' + extent;
-      var sizingOffset = this[offsetExtent] - this.sizingTarget[offsetExtent];
-      this.sizingTarget.style['max' + extent] = (max - margin - offset - sizingOffset) + 'px';
-    },
-
-    /**
-     * Centers horizontally and vertically if not already positioned. This also sets
-     * `position:fixed`.
-     */
-    center: function() {
-      if (!this._fitInfo.positionedBy.vertically || !this._fitInfo.positionedBy.horizontally) {
-        // need position:fixed to center
-        this.style.position = 'fixed';
-      }
-      if (!this._fitInfo.positionedBy.vertically) {
-        var top = (this._fitHeight - this.offsetHeight) / 2 + this._fitTop;
-        top -= this._fitInfo.margin.top;
-        this.style.top = top + 'px';
-      }
-      if (!this._fitInfo.positionedBy.horizontally) {
-        var left = (this._fitWidth - this.offsetWidth) / 2 + this._fitLeft;
-        left -= this._fitInfo.margin.left;
-        this.style.left = left + 'px';
-      }
-    }
-
-  };
-
-</script>
-<script>
-
-  Polymer.IronOverlayManager = {
-
-    _overlays: [],
-
-    // iframes have a default z-index of 100, so this default should be at least
-    // that.
-    _minimumZ: 101,
-
-    _backdrops: [],
-
-    _applyOverlayZ: function(overlay, aboveZ) {
-      this._setZ(overlay, aboveZ + 2);
-    },
-
-    _setZ: function(element, z) {
-      element.style.zIndex = z;
-    },
-
-    // track overlays for z-index and focus managemant
-    addOverlay: function(overlay) {
-      var minimumZ = Math.max(this.currentOverlayZ(), this._minimumZ);
-      this._overlays.push(overlay);
-      var newZ = this.currentOverlayZ();
-      if (newZ <= minimumZ) {
-        this._applyOverlayZ(overlay, minimumZ);
-      }
-    },
-
-    removeOverlay: function(overlay) {
-      var i = this._overlays.indexOf(overlay);
-      if (i >= 0) {
-        this._overlays.splice(i, 1);
-        this._setZ(overlay, '');
-      }
-    },
-
-    currentOverlay: function() {
-      var i = this._overlays.length - 1;
-      while (this._overlays[i] && !this._overlays[i].opened) {
-        --i;
-      }
-      return this._overlays[i];
-    },
-
-    currentOverlayZ: function() {
-      var z = this._minimumZ;
-      var current = this.currentOverlay();
-      if (current) {
-        var z1 = window.getComputedStyle(current).zIndex;
-        if (!isNaN(z1)) {
-          z = Number(z1);
-        }
-      }
-      return z;
-    },
-
-    /**
-     * Ensures that the minimum z-index of new overlays is at least `minimumZ`.
-     * This does not effect the z-index of any existing overlays.
-     *
-     * @param {number} minimumZ
-     */
-    ensureMinimumZ: function(minimumZ) {
-      this._minimumZ = Math.max(this._minimumZ, minimumZ);
-    },
-
-    focusOverlay: function() {
-      var current = this.currentOverlay();
-      // We have to be careful to focus the next overlay _after_ any current
-      // transitions are complete (due to the state being toggled prior to the
-      // transition). Otherwise, we risk infinite recursion when a transitioning
-      // (closed) overlay becomes the current overlay.
-      //
-      // NOTE: We make the assumption that any overlay that completes a transition
-      // will call into focusOverlay to kick the process back off. Currently:
-      // transitionend -> _applyFocus -> focusOverlay.
-      if (current && !current.transitioning) {
-        current._applyFocus();
-      }
-    },
-
-    trackBackdrop: function(element) {
-      // backdrops contains the overlays with a backdrop that are currently
-      // visible
-      if (element.opened) {
-        this._backdrops.push(element);
-      } else {
-        var index = this._backdrops.indexOf(element);
-        if (index >= 0) {
-          this._backdrops.splice(index, 1);
-        }
-      }
-    },
-
-    getBackdrops: function() {
-      return this._backdrops;
-    }
-
-  };
-
-</script>
-
-
-<script>
-
-/**
-Use `Polymer.IronOverlayBehavior` to implement an element that can be hidden or shown, and displays
-on top of other content. It includes an optional backdrop, and can be used to implement a variety
-of UI controls including dialogs and drop downs. Multiple overlays may be displayed at once.
-
-### Closing and canceling
-
-A dialog may be hidden by closing or canceling. The difference between close and cancel is user
-intent. Closing generally implies that the user acknowledged the content on the overlay. By default,
-it will cancel whenever the user taps outside it or presses the escape key. This behavior is
-configurable with the `no-cancel-on-esc-key` and the `no-cancel-on-outside-click` properties.
-`close()` should be called explicitly by the implementer when the user interacts with a control
-in the overlay element. When the dialog is canceled, the overlay fires an 'iron-overlay-canceled'
-event. Call `preventDefault` on this event to prevent the overlay from closing.
-
-### Positioning
-
-By default the element is sized and positioned to fit and centered inside the window. You can
-position and size it manually using CSS. See `Polymer.IronFitBehavior`.
-
-### Backdrop
-
-Set the `with-backdrop` attribute to display a backdrop behind the overlay. The backdrop is
-appended to `<body>` and is of type `<iron-overlay-backdrop>`. See its doc page for styling
-options.
-
-### Limitations
-
-The element is styled to appear on top of other content by setting its `z-index` property. You
-must ensure no element has a stacking context with a higher `z-index` than its parent stacking
-context. You should place this element as a child of `<body>` whenever possible.
-
-@demo demo/index.html
-@polymerBehavior Polymer.IronOverlayBehavior
-*/
-
-  Polymer.IronOverlayBehaviorImpl = {
-
-    properties: {
-
-      /**
-       * True if the overlay is currently displayed.
-       */
-      opened: {
-        observer: '_openedChanged',
-        type: Boolean,
-        value: false,
-        notify: true
-      },
-
-      /**
-       * True if the overlay was canceled when it was last closed.
-       */
-      canceled: {
-        observer: '_canceledChanged',
-        readOnly: true,
-        type: Boolean,
-        value: false
-      },
-
-      /**
-       * Set to true to display a backdrop behind the overlay.
-       */
-      withBackdrop: {
-        type: Boolean,
-        value: false
-      },
-
-      /**
-       * Set to true to disable auto-focusing the overlay or child nodes with
-       * the `autofocus` attribute` when the overlay is opened.
-       */
-      noAutoFocus: {
-        type: Boolean,
-        value: false
-      },
-
-      /**
-       * Set to true to disable canceling the overlay with the ESC key.
-       */
-      noCancelOnEscKey: {
-        type: Boolean,
-        value: false
-      },
-
-      /**
-       * Set to true to disable canceling the overlay by clicking outside it.
-       */
-      noCancelOnOutsideClick: {
-        type: Boolean,
-        value: false
-      },
-
-      /**
-       * Returns the reason this dialog was last closed.
-       */
-      closingReason: {
-        // was a getter before, but needs to be a property so other
-        // behaviors can override this.
-        type: Object
-      },
-
-      _manager: {
-        type: Object,
-        value: Polymer.IronOverlayManager
-      },
-
-      _boundOnCaptureClick: {
-        type: Function,
-        value: function() {
-          return this._onCaptureClick.bind(this);
-        }
-      },
-
-      _boundOnCaptureKeydown: {
-        type: Function,
-        value: function() {
-          return this._onCaptureKeydown.bind(this);
-        }
-      }
-
-    },
-
-    listeners: {
-      'tap': '_onClick',
-      'iron-resize': '_onIronResize'
-    },
-
-    /**
-     * The backdrop element.
-     * @type Node
-     */
-    get backdropElement() {
-      return this._backdrop;
-    },
-
-    get _focusNode() {
-      return Polymer.dom(this).querySelector('[autofocus]') || this;
-    },
-
-    registered: function() {
-      this._backdrop = document.createElement('iron-overlay-backdrop');
-    },
-
-    ready: function() {
-      this._ensureSetup();
-      if (this._callOpenedWhenReady) {
-        this._openedChanged();
-      }
-    },
-
-    detached: function() {
-      this.opened = false;
-      this._completeBackdrop();
-      this._manager.removeOverlay(this);
-    },
-
-    /**
-     * Toggle the opened state of the overlay.
-     */
-    toggle: function() {
-      this.opened = !this.opened;
-    },
-
-    /**
-     * Open the overlay.
-     */
-    open: function() {
-      this.opened = true;
-      this.closingReason = {canceled: false};
-    },
-
-    /**
-     * Close the overlay.
-     */
-    close: function() {
-      this.opened = false;
-      this._setCanceled(false);
-    },
-
-    /**
-     * Cancels the overlay.
-     */
-    cancel: function() {
-      var cancelEvent = this.fire('iron-overlay-canceled', undefined, {cancelable: true});
-      if (cancelEvent.defaultPrevented) {
-        return;
-      }
-
-      this.opened = false;
-      this._setCanceled(true);
-    },
-
-    _ensureSetup: function() {
-      if (this._overlaySetup) {
-        return;
-      }
-      this._overlaySetup = true;
-      this.style.outline = 'none';
-      this.style.display = 'none';
-    },
-
-    _openedChanged: function() {
-      if (this.opened) {
-        this.removeAttribute('aria-hidden');
-      } else {
-        this.setAttribute('aria-hidden', 'true');
-      }
-
-      // wait to call after ready only if we're initially open
-      if (!this._overlaySetup) {
-        this._callOpenedWhenReady = this.opened;
-        return;
-      }
-      if (this._openChangedAsync) {
-        this.cancelAsync(this._openChangedAsync);
-      }
-
-      this._toggleListeners();
-
-      if (this.opened) {
-        this._prepareRenderOpened();
-      }
-
-      // async here to allow overlay layer to become visible.
-      this._openChangedAsync = this.async(function() {
-        // overlay becomes visible here
-        this.style.display = '';
-        // force layout to ensure transitions will go
-        /** @suppress {suspiciousCode} */ this.offsetWidth;
-        if (this.opened) {
-          this._renderOpened();
-        } else {
-          this._renderClosed();
-        }
-        this._openChangedAsync = null;
-      });
-
-    },
-
-    _canceledChanged: function() {
-      this.closingReason = this.closingReason || {};
-      this.closingReason.canceled = this.canceled;
-    },
-
-    _toggleListener: function(enable, node, event, boundListener, capture) {
-      if (enable) {
-        // enable document-wide tap recognizer
-        if (event === 'tap') {
-          Polymer.Gestures.add(document, 'tap', null);
-        }
-        node.addEventListener(event, boundListener, capture);
-      } else {
-        // disable document-wide tap recognizer
-        if (event === 'tap') {
-          Polymer.Gestures.remove(document, 'tap', null);
-        }
-        node.removeEventListener(event, boundListener, capture);
-      }
-    },
-
-    _toggleListeners: function() {
-      if (this._toggleListenersAsync) {
-        this.cancelAsync(this._toggleListenersAsync);
-      }
-      // async so we don't auto-close immediately via a click.
-      this._toggleListenersAsync = this.async(function() {
-        this._toggleListener(this.opened, document, 'tap', this._boundOnCaptureClick, true);
-        this._toggleListener(this.opened, document, 'keydown', this._boundOnCaptureKeydown, true);
-        this._toggleListenersAsync = null;
-      }, 1);
-    },
-
-    // tasks which must occur before opening; e.g. making the element visible
-    _prepareRenderOpened: function() {
-      this._manager.addOverlay(this);
-
-      if (this.withBackdrop) {
-        this.backdropElement.prepare();
-        this._manager.trackBackdrop(this);
-      }
-
-      this._preparePositioning();
-      this.fit();
-      this._finishPositioning();
-    },
-
-    // tasks which cause the overlay to actually open; typically play an
-    // animation
-    _renderOpened: function() {
-      if (this.withBackdrop) {
-        this.backdropElement.open();
-      }
-      this._finishRenderOpened();
-    },
-
-    _renderClosed: function() {
-      if (this.withBackdrop) {
-        this.backdropElement.close();
-      }
-      this._finishRenderClosed();
-    },
-
-    _onTransitionend: function(event) {
-      // make sure this is our transition event.
-      if (event && event.target !== this) {
-        return;
-      }
-      if (this.opened) {
-        this._finishRenderOpened();
-      } else {
-        this._finishRenderClosed();
-      }
-    },
-
-    _finishRenderOpened: function() {
-      // focus the child node with [autofocus]
-      if (!this.noAutoFocus) {
-        this._focusNode.focus();
-      }
-
-      this.fire('iron-overlay-opened');
-
-      this._squelchNextResize = true;
-      this.async(this.notifyResize);
-    },
-
-    _finishRenderClosed: function() {
-      // hide the overlay and remove the backdrop
-      this.resetFit();
-      this.style.display = 'none';
-      this._completeBackdrop();
-      this._manager.removeOverlay(this);
-
-      this._focusNode.blur();
-      // focus the next overlay, if there is one
-      this._manager.focusOverlay();
-
-      this.fire('iron-overlay-closed', this.closingReason);
-
-      this._squelchNextResize = true;
-      this.async(this.notifyResize);
-    },
-
-    _completeBackdrop: function() {
-      if (this.withBackdrop) {
-        this._manager.trackBackdrop(this);
-        this.backdropElement.complete();
-      }
-    },
-
-    _preparePositioning: function() {
-      this.style.transition = this.style.webkitTransition = 'none';
-      this.style.transform = this.style.webkitTransform = 'none';
-      this.style.display = '';
-    },
-
-    _finishPositioning: function() {
-      this.style.display = 'none';
-      this.style.transform = this.style.webkitTransform = '';
-      // force layout to avoid application of transform
-      /** @suppress {suspiciousCode} */ this.offsetWidth;
-      this.style.transition = this.style.webkitTransition = '';
-    },
-
-    _applyFocus: function() {
-      if (this.opened) {
-        if (!this.noAutoFocus) {
-          this._focusNode.focus();
-        }
-      } else {
-        this._focusNode.blur();
-        this._manager.focusOverlay();
-      }
-    },
-
-    _onCaptureClick: function(event) {
-      // attempt to close asynchronously and prevent the close of a tap event is immediately heard
-      // on target. This is because in shadow dom due to event retargetting event.target is not
-      // useful.
-      if (!this.noCancelOnOutsideClick && (this._manager.currentOverlay() == this)) {
-        this._cancelJob = this.async(function() {
-          this.cancel();
-        }, 10);
-      }
-    },
-
-    _onClick: function(event) {
-      if (this._cancelJob) {
-        this.cancelAsync(this._cancelJob);
-        this._cancelJob = null;
-      }
-    },
-
-    _onCaptureKeydown: function(event) {
-      var ESC = 27;
-      if (!this.noCancelOnEscKey && (event.keyCode === ESC)) {
-        this.cancel();
-        event.stopPropagation();
-      }
-    },
-
-    _onIronResize: function() {
-      if (this._squelchNextResize) {
-        this._squelchNextResize = false;
-        return;
-      }
-      if (this.opened) {
-        this.refit();
-      }
-    }
-
-/**
- * Fired after the `iron-overlay` opens.
- * @event iron-overlay-opened
- */
-
-/**
- * Fired when the `iron-overlay` is canceled, but before it is closed.
- * Cancel the event to prevent the `iron-overlay` from closing.
- * @event iron-overlay-canceled
- */
-
-/**
- * Fired after the `iron-overlay` closes.
- * @event iron-overlay-closed
- * @param {{canceled: (boolean|undefined)}} set to the `closingReason` attribute
- */
-  };
-
-  /** @polymerBehavior */
-  Polymer.IronOverlayBehavior = [Polymer.IronFitBehavior, Polymer.IronResizableBehavior, Polymer.IronOverlayBehaviorImpl];
-
-
-</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic,500,500italic,700,700italic">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700">
 <style is="custom-style">
@@ -10048,6 +9258,7 @@ context. You should place this element as a child of `<body>` whenever possible.
   }
 
 </style>
+
 
 
 <script>
@@ -10620,10 +9831,46 @@ context. You should place this element as a child of `<body>` whenever possible.
      * Values taken from: http://www.w3.org/TR/2007/WD-DOM-Level-3-Events-20071221/keyset.html#KeySet-Set
      */
     var KEY_IDENTIFIER = {
-      'U+0008': 'backspace',
       'U+0009': 'tab',
       'U+001B': 'esc',
       'U+0020': 'space',
+      'U+002A': '*',
+      'U+0030': '0',
+      'U+0031': '1',
+      'U+0032': '2',
+      'U+0033': '3',
+      'U+0034': '4',
+      'U+0035': '5',
+      'U+0036': '6',
+      'U+0037': '7',
+      'U+0038': '8',
+      'U+0039': '9',
+      'U+0041': 'a',
+      'U+0042': 'b',
+      'U+0043': 'c',
+      'U+0044': 'd',
+      'U+0045': 'e',
+      'U+0046': 'f',
+      'U+0047': 'g',
+      'U+0048': 'h',
+      'U+0049': 'i',
+      'U+004A': 'j',
+      'U+004B': 'k',
+      'U+004C': 'l',
+      'U+004D': 'm',
+      'U+004E': 'n',
+      'U+004F': 'o',
+      'U+0050': 'p',
+      'U+0051': 'q',
+      'U+0052': 'r',
+      'U+0053': 's',
+      'U+0054': 't',
+      'U+0055': 'u',
+      'U+0056': 'v',
+      'U+0057': 'w',
+      'U+0058': 'x',
+      'U+0059': 'y',
+      'U+005A': 'z',
       'U+007F': 'del'
     };
 
@@ -10635,7 +9882,6 @@ context. You should place this element as a child of `<body>` whenever possible.
      * Values from: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent.keyCode#Value_of_keyCode
      */
     var KEY_CODE = {
-      8: 'backspace',
       9: 'tab',
       13: 'enter',
       27: 'esc',
@@ -10665,6 +9911,16 @@ context. You should place this element as a child of `<body>` whenever possible.
     };
 
     /**
+     * KeyboardEvent.key is mostly represented by printable character made by
+     * the keyboard, with unprintable keys labeled nicely.
+     *
+     * However, on OS X, Alt+char can make a Unicode character that follows an
+     * Apple-specific mapping. In this case, we
+     * fall back to .keyCode.
+     */
+    var KEY_CHAR = /[a-z0-9*]/;
+
+    /**
      * Matches a keyIdentifier string.
      */
     var IDENT_CHAR = /U\+/;
@@ -10684,12 +9940,14 @@ context. You should place this element as a child of `<body>` whenever possible.
       var validKey = '';
       if (key) {
         var lKey = key.toLowerCase();
-        if (lKey === ' ' || SPACE_KEY.test(lKey)) {
-          validKey = 'space';
-        } else if (lKey.length == 1) {
-          validKey = lKey;
+        if (lKey.length == 1) {
+          if (KEY_CHAR.test(lKey)) {
+            validKey = lKey;
+          }
         } else if (ARROW_KEY.test(lKey)) {
           validKey = lKey.replace('arrow', '');
+        } else if (SPACE_KEY.test(lKey)) {
+          validKey = 'space';
         } else if (lKey == 'multiply') {
           // numpad '*' can map to Multiply on IE/Windows
           validKey = '*';
@@ -10703,11 +9961,8 @@ context. You should place this element as a child of `<body>` whenever possible.
     function transformKeyIdentifier(keyIdent) {
       var validKey = '';
       if (keyIdent) {
-        if (keyIdent in KEY_IDENTIFIER) {
+        if (IDENT_CHAR.test(keyIdent)) {
           validKey = KEY_IDENTIFIER[keyIdent];
-        } else if (IDENT_CHAR.test(keyIdent)) {
-          keyIdent = parseInt(keyIdent.replace('U+', '0x'), 16);
-          validKey = String.fromCharCode(keyIdent).toLowerCase();
         } else {
           validKey = keyIdent.toLowerCase();
         }
@@ -10747,24 +10002,15 @@ context. You should place this element as a child of `<body>` whenever possible.
         transformKey(keyEvent.detail.key) || '';
     }
 
-    function keyComboMatchesEvent(keyCombo, event, eventKey) {
-      return eventKey === keyCombo.key &&
-        (!keyCombo.hasModifiers || (
-          !!event.shiftKey === !!keyCombo.shiftKey &&
-          !!event.ctrlKey === !!keyCombo.ctrlKey &&
-          !!event.altKey === !!keyCombo.altKey &&
-          !!event.metaKey === !!keyCombo.metaKey)
-        );
+    function keyComboMatchesEvent(keyCombo, keyEvent) {
+      return normalizedKeyForEvent(keyEvent) === keyCombo.key &&
+        !!keyEvent.shiftKey === !!keyCombo.shiftKey &&
+        !!keyEvent.ctrlKey === !!keyCombo.ctrlKey &&
+        !!keyEvent.altKey === !!keyCombo.altKey &&
+        !!keyEvent.metaKey === !!keyCombo.metaKey;
     }
 
     function parseKeyComboString(keyComboString) {
-      if (keyComboString.length === 1) {
-        return {
-          combo: keyComboString,
-          key: keyComboString,
-          event: 'keydown'
-        };
-      }
       return keyComboString.split('+').reduce(function(parsedKeyCombo, keyComboPart) {
         var eventParts = keyComboPart.split(':');
         var keyName = eventParts[0];
@@ -10772,7 +10018,6 @@ context. You should place this element as a child of `<body>` whenever possible.
 
         if (keyName in MODIFIER_KEYS) {
           parsedKeyCombo[MODIFIER_KEYS[keyName]] = true;
-          parsedKeyCombo.hasModifiers = true;
         } else {
           parsedKeyCombo.key = keyName;
           parsedKeyCombo.event = event || 'keydown';
@@ -10785,10 +10030,11 @@ context. You should place this element as a child of `<body>` whenever possible.
     }
 
     function parseEventString(eventString) {
-      return eventString.trim().split(' ').map(function(keyComboString) {
+      return eventString.split(' ').map(function(keyComboString) {
         return parseKeyComboString(keyComboString);
       });
     }
+
 
     /**
      * `Polymer.IronA11yKeysBehavior` provides a normalized interface for processing
@@ -10885,12 +10131,14 @@ context. You should place this element as a child of `<body>` whenever possible.
 
       keyboardEventMatchesKeys: function(event, eventString) {
         var keyCombos = parseEventString(eventString);
-        var eventKey = normalizedKeyForEvent(event);
-        for (var i = 0; i < keyCombos.length; ++i) {
-          if (keyComboMatchesEvent(keyCombos[i], event, eventKey)) {
+        var index;
+
+        for (index = 0; index < keyCombos.length; ++index) {
+          if (keyComboMatchesEvent(keyCombos[index], event)) {
             return true;
           }
         }
+
         return false;
       },
 
@@ -10917,15 +10165,6 @@ context. You should place this element as a child of `<body>` whenever possible.
 
         for (var eventString in this._imperativeKeyBindings) {
           this._addKeyBinding(eventString, this._imperativeKeyBindings[eventString]);
-        }
-
-        // Give precedence to combos with modifiers to be checked first.
-        for (var eventName in this._keyBindings) {
-          this._keyBindings[eventName].sort(function (kb1, kb2) {
-            var b1 = kb1[0].hasModifiers;
-            var b2 = kb2[0].hasModifiers;
-            return (b1 === b2) ? 0 : b1 ? -1 : 1;
-          })
         }
       },
 
@@ -10982,23 +10221,14 @@ context. You should place this element as a child of `<body>` whenever possible.
           event.stopPropagation();
         }
 
-        // if event has been already prevented, don't do anything
-        if (event.defaultPrevented) {
-          return;
-        }
+        keyBindings.forEach(function(keyBinding) {
+          var keyCombo = keyBinding[0];
+          var handlerName = keyBinding[1];
 
-        var eventKey = normalizedKeyForEvent(event);
-        for (var i = 0; i < keyBindings.length; i++) {
-          var keyCombo = keyBindings[i][0];
-          var handlerName = keyBindings[i][1];
-          if (keyComboMatchesEvent(keyCombo, event, eventKey)) {
+          if (!event.defaultPrevented && keyComboMatchesEvent(keyCombo, event)) {
             this._triggerKeyHandler(keyCombo, handlerName, event);
-            // exit the loop if eventDefault was prevented
-            if (event.defaultPrevented) {
-              return;
-            }
           }
-        }
+        }, this);
       },
 
       _triggerKeyHandler: function(keyCombo, handlerName, keyboardEvent) {
@@ -15991,80 +15221,6 @@ function TK(){return this.a._c()}function bL(){return this.a.Pc()}function cL(){
     return _moment;
 
 }));</script><script>
-  /**
-  Polymer.IronFormElementBehavior enables a custom element to be included
-  in an `iron-form`.
-
-  @demo demo/index.html
-  @polymerBehavior
-  */
-  Polymer.IronFormElementBehavior = {
-
-    properties: {
-      /**
-       * Fired when the element is added to an `iron-form`.
-       *
-       * @event iron-form-element-register
-       */
-
-      /**
-       * Fired when the element is removed from an `iron-form`.
-       *
-       * @event iron-form-element-unregister
-       */
-
-      /**
-       * The name of this element.
-       */
-      name: {
-        type: String
-      },
-
-      /**
-       * The value for this element.
-       */
-      value: {
-        notify: true,
-        type: String
-      },
-
-      /**
-       * Set to true to mark the input as required. If used in a form, a
-       * custom element that uses this behavior should also use
-       * Polymer.IronValidatableBehavior and define a custom validation method.
-       * Otherwise, a `required` element will always be considered valid.
-       * It's also strongly recommended to provide a visual style for the element
-       * when its value is invalid.
-       */
-      required: {
-        type: Boolean,
-        value: false
-      },
-
-      /**
-       * The form that the element is registered to.
-       */
-      _parentForm: {
-        type: Object
-      }
-    },
-
-    attached: function() {
-      // Note: the iron-form that this element belongs to will set this
-      // element's _parentForm property when handling this event.
-      this.fire('iron-form-element-register');
-    },
-
-    detached: function() {
-      if (this._parentForm) {
-        this._parentForm.fire('iron-form-element-unregister', {target: this});
-      }
-    }
-
-  };
-
-</script>
-<script>
 
   /**
    * `Use Polymer.IronValidatableBehavior` to implement an element that validates user input.
@@ -16426,6 +15582,81 @@ is separate from validation, and `allowed-pattern` does not affect how the input
 </script>
 <script>
   /**
+  Polymer.IronFormElementBehavior enables a custom element to be included
+  in an `iron-form`.
+
+  @demo demo/index.html
+  @polymerBehavior
+  */
+  Polymer.IronFormElementBehavior = {
+
+    properties: {
+      /**
+       * Fired when the element is added to an `iron-form`.
+       *
+       * @event iron-form-element-register
+       */
+
+      /**
+       * Fired when the element is removed from an `iron-form`.
+       *
+       * @event iron-form-element-unregister
+       */
+
+      /**
+       * The name of this element.
+       */
+      name: {
+        type: String
+      },
+
+      /**
+       * The value for this element.
+       */
+      value: {
+        notify: true,
+        type: String
+      },
+
+      /**
+       * Set to true to mark the input as required. If used in a form, a
+       * custom element that uses this behavior should also use
+       * Polymer.IronValidatableBehavior and define a custom validation method.
+       * Otherwise, a `required` element will always be considered valid.
+       * It's also strongly recommended to provide a visual style for the element
+       * when its value is invalid.
+       */
+      required: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * The form that the element is registered to.
+       */
+      _parentForm: {
+        type: Object
+      }
+    },
+
+    attached: function() {
+      // Note: the iron-form that this element belongs to will set this
+      // element's _parentForm property when handling this event.
+      this.fire('iron-form-element-register');
+    },
+
+    detached: function() {
+      if (this._parentForm) {
+        this._parentForm.fire('iron-form-element-unregister', {target: this});
+      }
+    }
+
+  };
+
+</script>
+<script>
+
+  /**
    * Use `Polymer.PaperInputBehavior` to implement inputs with `<paper-input-container>`. This
    * behavior is implemented by `<paper-input>`. It exposes a number of properties from
    * `<paper-input-container>` and `<input is="iron-input">` and they should be bound in your
@@ -16436,6 +15667,7 @@ is separate from validation, and `allowed-pattern` does not affect how the input
    * @polymerBehavior Polymer.PaperInputBehavior
    */
   Polymer.PaperInputBehaviorImpl = {
+
     properties: {
       /**
        * Fired when the input changes due to user interaction.
@@ -16444,8 +15676,7 @@ is separate from validation, and `allowed-pattern` does not affect how the input
        */
 
       /**
-       * The label for this input. Bind this to `<label>`'s content and `hidden` property, e.g.
-       * `<label hidden$="[[!label]]">[[label]]</label>` in your `template`
+       * The label for this input. Bind this to `<paper-input-container>`'s `label` property.
        */
       label: {
         type: String
@@ -16700,21 +15931,21 @@ is separate from validation, and `allowed-pattern` does not affect how the input
       },
 
       /**
-       * Bind this to the `<input is="iron-input">`'s `results` property, used with type=search.
+       * Bind this to the `<input is="iron-input">`'s `results` property, , used with type=search.
        */
       results: {
         type: Number
       },
 
       /**
-       * Bind this to the `<input is="iron-input">`'s `accept` property, used with type=file.
+       * Bind this to the `<input is="iron-input">`'s `accept` property, , used with type=file.
        */
       accept: {
         type: String
       },
 
       /**
-       * Bind this to the `<input is="iron-input">`'s `multiple` property, used with type=file.
+       * Bind this to the `<input is="iron-input">`'s `multiple` property, , used with type=file.
        */
       multiple: {
         type: Boolean
@@ -16723,44 +15954,23 @@ is separate from validation, and `allowed-pattern` does not affect how the input
       _ariaDescribedBy: {
         type: String,
         value: ''
-      },
-
-      _ariaLabelledBy: {
-        type: String,
-        value: ''
       }
 
     },
 
     listeners: {
-      'addon-attached': '_onAddonAttached',
-      'focus': '_onFocus'
+      'addon-attached': '_onAddonAttached'
     },
 
     observers: [
       '_focusedControlStateChanged(focused)'
     ],
 
-    keyBindings: {
-      'shift+tab:keydown': '_onShiftTabDown'
-    },
-
-    hostAttributes: {
-      tabindex: 0
-    },
-
     /**
      * Returns a reference to the input element.
      */
     get inputElement() {
       return this.$.input;
-    },
-
-    /**
-     * Returns a reference to the focusable element.
-     */
-    get _focusableElement() {
-      return this.inputElement;
     },
 
     attached: function() {
@@ -16794,30 +16004,6 @@ is separate from validation, and `allowed-pattern` does not affect how the input
      */
     validate: function() {
       return this.inputElement.validate();
-    },
-
-    /**
-     * Forward focus to inputElement
-     */
-    _onFocus: function() {
-      if (!this._shiftTabPressed) {
-        this._focusableElement.focus();
-      }
-    },
-
-    /**
-     * Handler that is called when a shift+tab keypress is detected by the menu.
-     *
-     * @param {CustomEvent} event A key combination event.
-     */
-    _onShiftTabDown: function(event) {
-      var oldTabIndex = this.getAttribute('tabindex');
-      this._shiftTabPressed = true;
-      this.setAttribute('tabindex', '-1');
-      this.async(function() {
-        this.setAttribute('tabindex', oldTabIndex);
-        this._shiftTabPressed = false;
-      }, 1);
     },
 
     /**
@@ -16900,15 +16086,604 @@ is separate from validation, and `allowed-pattern` does not affect how the input
         });
       }
     }
+
   };
 
   /** @polymerBehavior */
-  Polymer.PaperInputBehavior = [
-    Polymer.IronControlState,
-    Polymer.IronA11yKeysBehavior,
-    Polymer.PaperInputBehaviorImpl
-  ];
+  Polymer.PaperInputBehavior = [Polymer.IronControlState, Polymer.PaperInputBehaviorImpl];
+
 </script>
+<style>
+
+  /*******************************
+            Flex Layout
+  *******************************/
+
+  html /deep/ .layout.horizontal,
+  html /deep/ .layout.horizontal-reverse,
+  html /deep/ .layout.vertical,
+  html /deep/ .layout.vertical-reverse {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  html /deep/ .layout.inline {
+    display: -ms-inline-flexbox;
+    display: -webkit-inline-flex;
+    display: inline-flex;
+  }
+
+  html /deep/ .layout.horizontal {
+    -ms-flex-direction: row;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+  }
+
+  html /deep/ .layout.horizontal-reverse {
+    -ms-flex-direction: row-reverse;
+    -webkit-flex-direction: row-reverse;
+    flex-direction: row-reverse;
+  }
+
+  html /deep/ .layout.vertical {
+    -ms-flex-direction: column;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+  }
+
+  html /deep/ .layout.vertical-reverse {
+    -ms-flex-direction: column-reverse;
+    -webkit-flex-direction: column-reverse;
+    flex-direction: column-reverse;
+  }
+
+  html /deep/ .layout.wrap {
+    -ms-flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+
+  html /deep/ .layout.wrap-reverse {
+    -ms-flex-wrap: wrap-reverse;
+    -webkit-flex-wrap: wrap-reverse;
+    flex-wrap: wrap-reverse;
+  }
+
+  html /deep/ .flex-auto {
+    -ms-flex: 1 1 auto;
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+  }
+
+  html /deep/ .flex-none {
+    -ms-flex: none;
+    -webkit-flex: none;
+    flex: none;
+  }
+
+  html /deep/ .flex,
+  html /deep/ .flex-1 {
+    -ms-flex: 1;
+    -webkit-flex: 1;
+    flex: 1;
+  }
+
+  html /deep/ .flex-2 {
+    -ms-flex: 2;
+    -webkit-flex: 2;
+    flex: 2;
+  }
+
+  html /deep/ .flex-3 {
+    -ms-flex: 3;
+    -webkit-flex: 3;
+    flex: 3;
+  }
+
+  html /deep/ .flex-4 {
+    -ms-flex: 4;
+    -webkit-flex: 4;
+    flex: 4;
+  }
+
+  html /deep/ .flex-5 {
+    -ms-flex: 5;
+    -webkit-flex: 5;
+    flex: 5;
+  }
+
+  html /deep/ .flex-6 {
+    -ms-flex: 6;
+    -webkit-flex: 6;
+    flex: 6;
+  }
+
+  html /deep/ .flex-7 {
+    -ms-flex: 7;
+    -webkit-flex: 7;
+    flex: 7;
+  }
+
+  html /deep/ .flex-8 {
+    -ms-flex: 8;
+    -webkit-flex: 8;
+    flex: 8;
+  }
+
+  html /deep/ .flex-9 {
+    -ms-flex: 9;
+    -webkit-flex: 9;
+    flex: 9;
+  }
+
+  html /deep/ .flex-10 {
+    -ms-flex: 10;
+    -webkit-flex: 10;
+    flex: 10;
+  }
+
+  html /deep/ .flex-11 {
+    -ms-flex: 11;
+    -webkit-flex: 11;
+    flex: 11;
+  }
+
+  html /deep/ .flex-12 {
+    -ms-flex: 12;
+    -webkit-flex: 12;
+    flex: 12;
+  }
+
+  /* alignment in cross axis */
+
+  html /deep/ .layout.start {
+    -ms-flex-align: start;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+  }
+
+  html /deep/ .layout.center,
+  html /deep/ .layout.center-center {
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+
+  html /deep/ .layout.end {
+    -ms-flex-align: end;
+    -webkit-align-items: flex-end;
+    align-items: flex-end;
+  }
+
+  /* alignment in main axis */
+
+  html /deep/ .layout.start-justified {
+    -ms-flex-pack: start;
+    -webkit-justify-content: flex-start;
+    justify-content: flex-start;
+  }
+
+  html /deep/ .layout.center-justified,
+  html /deep/ .layout.center-center {
+    -ms-flex-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+  }
+
+  html /deep/ .layout.end-justified {
+    -ms-flex-pack: end;
+    -webkit-justify-content: flex-end;
+    justify-content: flex-end;
+  }
+
+  html /deep/ .layout.around-justified {
+    -ms-flex-pack: around;
+    -webkit-justify-content: space-around;
+    justify-content: space-around;
+  }
+
+  html /deep/ .layout.justified {
+    -ms-flex-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+  }
+
+  /* self alignment */
+
+  html /deep/ .self-start {
+    -ms-align-self: flex-start;
+    -webkit-align-self: flex-start;
+    align-self: flex-start;
+  }
+
+  html /deep/ .self-center {
+    -ms-align-self: center;
+    -webkit-align-self: center;
+    align-self: center;
+  }
+
+  html /deep/ .self-end {
+    -ms-align-self: flex-end;
+    -webkit-align-self: flex-end;
+    align-self: flex-end;
+  }
+
+  html /deep/ .self-stretch {
+    -ms-align-self: stretch;
+    -webkit-align-self: stretch;
+    align-self: stretch;
+  }
+
+  /*******************************
+            Other Layout
+  *******************************/
+
+  html /deep/ .block {
+    display: block;
+  }
+
+  /* IE 10 support for HTML5 hidden attr */
+  html /deep/ [hidden] {
+    display: none !important;
+  }
+
+  html /deep/ .invisible {
+    visibility: hidden !important;
+  }
+
+  html /deep/ .relative {
+    position: relative;
+  }
+
+  html /deep/ .fit {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  body.fullbleed {
+    margin: 0;
+    height: 100vh;
+  }
+
+  html /deep/ .scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow: auto;
+  }
+
+  .fixed-bottom,
+  .fixed-left,
+  .fixed-right,
+  .fixed-top {
+    position: fixed;
+  }
+
+  html /deep/ .fixed-top {
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
+  html /deep/ .fixed-right {
+    top: 0;
+    right: 0;
+    botttom: 0;
+  }
+
+  html /deep/ .fixed-bottom {
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  html /deep/ .fixed-left {
+    top: 0;
+    botttom: 0;
+    left: 0;
+  }
+
+</style>
+<style>
+
+  /*******************************
+            Flex Layout
+  *******************************/
+
+  .layout.horizontal,
+  .layout.horizontal-reverse,
+  .layout.vertical,
+  .layout.vertical-reverse {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .layout.inline {
+    display: -ms-inline-flexbox;
+    display: -webkit-inline-flex;
+    display: inline-flex;
+  }
+
+  .layout.horizontal {
+    -ms-flex-direction: row;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+  }
+
+  .layout.horizontal-reverse {
+    -ms-flex-direction: row-reverse;
+    -webkit-flex-direction: row-reverse;
+    flex-direction: row-reverse;
+  }
+
+  .layout.vertical {
+    -ms-flex-direction: column;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+  }
+
+  .layout.vertical-reverse {
+    -ms-flex-direction: column-reverse;
+    -webkit-flex-direction: column-reverse;
+    flex-direction: column-reverse;
+  }
+
+  .layout.wrap {
+    -ms-flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+
+  .layout.wrap-reverse {
+    -ms-flex-wrap: wrap-reverse;
+    -webkit-flex-wrap: wrap-reverse;
+    flex-wrap: wrap-reverse;
+  }
+
+  .flex-auto {
+    -ms-flex: 1 1 auto;
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+  }
+
+  .flex-none {
+    -ms-flex: none;
+    -webkit-flex: none;
+    flex: none;
+  }
+
+  .flex,
+  .flex-1 {
+    -ms-flex: 1;
+    -webkit-flex: 1;
+    flex: 1;
+  }
+
+  .flex-2 {
+    -ms-flex: 2;
+    -webkit-flex: 2;
+    flex: 2;
+  }
+
+  .flex-3 {
+    -ms-flex: 3;
+    -webkit-flex: 3;
+    flex: 3;
+  }
+
+  .flex-4 {
+    -ms-flex: 4;
+    -webkit-flex: 4;
+    flex: 4;
+  }
+
+  .flex-5 {
+    -ms-flex: 5;
+    -webkit-flex: 5;
+    flex: 5;
+  }
+
+  .flex-6 {
+    -ms-flex: 6;
+    -webkit-flex: 6;
+    flex: 6;
+  }
+
+  .flex-7 {
+    -ms-flex: 7;
+    -webkit-flex: 7;
+    flex: 7;
+  }
+
+  .flex-8 {
+    -ms-flex: 8;
+    -webkit-flex: 8;
+    flex: 8;
+  }
+
+  .flex-9 {
+    -ms-flex: 9;
+    -webkit-flex: 9;
+    flex: 9;
+  }
+
+  .flex-10 {
+    -ms-flex: 10;
+    -webkit-flex: 10;
+    flex: 10;
+  }
+
+  .flex-11 {
+    -ms-flex: 11;
+    -webkit-flex: 11;
+    flex: 11;
+  }
+
+  .flex-12 {
+    -ms-flex: 12;
+    -webkit-flex: 12;
+    flex: 12;
+  }
+
+  /* alignment in cross axis */
+
+  .layout.start {
+    -ms-flex-align: start;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+  }
+
+  .layout.center,
+  .layout.center-center {
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+
+  .layout.end {
+    -ms-flex-align: end;
+    -webkit-align-items: flex-end;
+    align-items: flex-end;
+  }
+
+  /* alignment in main axis */
+
+  .layout.start-justified {
+    -ms-flex-pack: start;
+    -webkit-justify-content: flex-start;
+    justify-content: flex-start;
+  }
+
+  .layout.center-justified,
+  .layout.center-center {
+    -ms-flex-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+  }
+
+  .layout.end-justified {
+    -ms-flex-pack: end;
+    -webkit-justify-content: flex-end;
+    justify-content: flex-end;
+  }
+
+  .layout.around-justified {
+    -ms-flex-pack: around;
+    -webkit-justify-content: space-around;
+    justify-content: space-around;
+  }
+
+  .layout.justified {
+    -ms-flex-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+  }
+
+  /* self alignment */
+
+  .self-start {
+    -ms-align-self: flex-start;
+    -webkit-align-self: flex-start;
+    align-self: flex-start;
+  }
+
+  .self-center {
+    -ms-align-self: center;
+    -webkit-align-self: center;
+    align-self: center;
+  }
+
+  .self-end {
+    -ms-align-self: flex-end;
+    -webkit-align-self: flex-end;
+    align-self: flex-end;
+  }
+
+  .self-stretch {
+    -ms-align-self: stretch;
+    -webkit-align-self: stretch;
+    align-self: stretch;
+  }
+
+  /*******************************
+            Other Layout
+  *******************************/
+
+  .block {
+    display: block;
+  }
+
+  /* IE 10 support for HTML5 hidden attr */
+  [hidden] {
+    display: none !important;
+  }
+
+  .invisible {
+    visibility: hidden !important;
+  }
+
+  .relative {
+    position: relative;
+  }
+
+  .fit {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  body.fullbleed {
+    margin: 0;
+    height: 100vh;
+  }
+
+  .scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow: auto;
+  }
+
+  /* fixed position */
+
+  .fixed-bottom,
+  .fixed-left,
+  .fixed-right,
+  .fixed-top {
+    position: fixed;
+  }
+
+  .fixed-top {
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .fixed-right {
+    top: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .fixed-bottom {
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  .fixed-left {
+    top: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+</style>
+
+
+
 <script>
 
   /**
@@ -16944,10 +16719,6 @@ is separate from validation, and `allowed-pattern` does not affect how the input
   };
 
 </script>
-
-
-
-
 
 
 
@@ -18116,6 +17887,790 @@ if (!window.Promise) {
     },
 
   });
+</script>
+<script>
+
+/**
+Polymer.IronFitBehavior fits an element in another element using `max-height` and `max-width`, and
+optionally centers it in the window or another element.
+
+The element will only be sized and/or positioned if it has not already been sized and/or positioned
+by CSS.
+
+CSS properties               | Action
+-----------------------------|-------------------------------------------
+`position` set               | Element is not centered horizontally or vertically
+`top` or `bottom` set        | Element is not vertically centered
+`left` or `right` set        | Element is not horizontally centered
+`max-height` or `height` set | Element respects `max-height` or `height`
+`max-width` or `width` set   | Element respects `max-width` or `width`
+
+@demo demo/index.html
+@polymerBehavior
+*/
+
+  Polymer.IronFitBehavior = {
+
+    properties: {
+
+      /**
+       * The element that will receive a `max-height`/`width`. By default it is the same as `this`,
+       * but it can be set to a child element. This is useful, for example, for implementing a
+       * scrolling region inside the element.
+       * @type {!Element}
+       */
+      sizingTarget: {
+        type: Object,
+        value: function() {
+          return this;
+        }
+      },
+
+      /**
+       * The element to fit `this` into.
+       */
+      fitInto: {
+        type: Object,
+        value: window
+      },
+
+      /**
+       * Set to true to auto-fit on attach.
+       */
+      autoFitOnAttach: {
+        type: Boolean,
+        value: false
+      },
+
+      /** @type {?Object} */
+      _fitInfo: {
+        type: Object
+      }
+
+    },
+
+    get _fitWidth() {
+      var fitWidth;
+      if (this.fitInto === window) {
+        fitWidth = this.fitInto.innerWidth;
+      } else {
+        fitWidth = this.fitInto.getBoundingClientRect().width;
+      }
+      return fitWidth;
+    },
+
+    get _fitHeight() {
+      var fitHeight;
+      if (this.fitInto === window) {
+        fitHeight = this.fitInto.innerHeight;
+      } else {
+        fitHeight = this.fitInto.getBoundingClientRect().height;
+      }
+      return fitHeight;
+    },
+
+    get _fitLeft() {
+      var fitLeft;
+      if (this.fitInto === window) {
+        fitLeft = 0;
+      } else {
+        fitLeft = this.fitInto.getBoundingClientRect().left;
+      }
+      return fitLeft;
+    },
+
+    get _fitTop() {
+      var fitTop;
+      if (this.fitInto === window) {
+        fitTop = 0;
+      } else {
+        fitTop = this.fitInto.getBoundingClientRect().top;
+      }
+      return fitTop;
+    },
+
+    attached: function() {
+      if (this.autoFitOnAttach) {
+        if (window.getComputedStyle(this).display === 'none') {
+          setTimeout(function() {
+            this.fit();
+          }.bind(this));
+        } else {
+          this.fit();
+        }
+      }
+    },
+
+    /**
+     * Fits and optionally centers the element into the window, or `fitInfo` if specified.
+     */
+    fit: function() {
+      this._discoverInfo();
+      this.constrain();
+      this.center();
+    },
+
+    /**
+     * Memoize information needed to position and size the target element.
+     */
+    _discoverInfo: function() {
+      if (this._fitInfo) {
+        return;
+      }
+      var target = window.getComputedStyle(this);
+      var sizer = window.getComputedStyle(this.sizingTarget);
+      this._fitInfo = {
+        inlineStyle: {
+          top: this.style.top || '',
+          left: this.style.left || ''
+        },
+        positionedBy: {
+          vertically: target.top !== 'auto' ? 'top' : (target.bottom !== 'auto' ?
+            'bottom' : null),
+          horizontally: target.left !== 'auto' ? 'left' : (target.right !== 'auto' ?
+            'right' : null),
+          css: target.position
+        },
+        sizedBy: {
+          height: sizer.maxHeight !== 'none',
+          width: sizer.maxWidth !== 'none'
+        },
+        margin: {
+          top: parseInt(target.marginTop, 10) || 0,
+          right: parseInt(target.marginRight, 10) || 0,
+          bottom: parseInt(target.marginBottom, 10) || 0,
+          left: parseInt(target.marginLeft, 10) || 0
+        }
+      };
+    },
+
+    /**
+     * Resets the target element's position and size constraints, and clear
+     * the memoized data.
+     */
+    resetFit: function() {
+      if (!this._fitInfo || !this._fitInfo.sizedBy.height) {
+        this.sizingTarget.style.maxHeight = '';
+        this.style.top = this._fitInfo ? this._fitInfo.inlineStyle.top : '';
+      }
+      if (!this._fitInfo || !this._fitInfo.sizedBy.width) {
+        this.sizingTarget.style.maxWidth = '';
+        this.style.left = this._fitInfo ? this._fitInfo.inlineStyle.left : '';
+      }
+      if (this._fitInfo) {
+        this.style.position = this._fitInfo.positionedBy.css;
+      }
+      this._fitInfo = null;
+    },
+
+    /**
+     * Equivalent to calling `resetFit()` and `fit()`. Useful to call this after the element,
+     * the window, or the `fitInfo` element has been resized.
+     */
+    refit: function() {
+      this.resetFit();
+      this.fit();
+    },
+
+    /**
+     * Constrains the size of the element to the window or `fitInfo` by setting `max-height`
+     * and/or `max-width`.
+     */
+    constrain: function() {
+      var info = this._fitInfo;
+      // position at (0px, 0px) if not already positioned, so we can measure the natural size.
+      if (!this._fitInfo.positionedBy.vertically) {
+        this.style.top = '0px';
+      }
+      if (!this._fitInfo.positionedBy.horizontally) {
+        this.style.left = '0px';
+      }
+      if (!this._fitInfo.positionedBy.vertically || !this._fitInfo.positionedBy.horizontally) {
+        // need position:fixed to properly size the element
+        this.style.position = 'fixed';
+      }
+      // need border-box for margin/padding
+      this.sizingTarget.style.boxSizing = 'border-box';
+      // constrain the width and height if not already set
+      var rect = this.getBoundingClientRect();
+      if (!info.sizedBy.height) {
+        this._sizeDimension(rect, info.positionedBy.vertically, 'top', 'bottom', 'Height');
+      }
+      if (!info.sizedBy.width) {
+        this._sizeDimension(rect, info.positionedBy.horizontally, 'left', 'right', 'Width');
+      }
+    },
+
+    _sizeDimension: function(rect, positionedBy, start, end, extent) {
+      var info = this._fitInfo;
+      var max = extent === 'Width' ? this._fitWidth : this._fitHeight;
+      var flip = (positionedBy === end);
+      var offset = flip ? max - rect[end] : rect[start];
+      var margin = info.margin[flip ? start : end];
+      var offsetExtent = 'offset' + extent;
+      var sizingOffset = this[offsetExtent] - this.sizingTarget[offsetExtent];
+      this.sizingTarget.style['max' + extent] = (max - margin - offset - sizingOffset) + 'px';
+    },
+
+    /**
+     * Centers horizontally and vertically if not already positioned. This also sets
+     * `position:fixed`.
+     */
+    center: function() {
+      if (!this._fitInfo.positionedBy.vertically || !this._fitInfo.positionedBy.horizontally) {
+        // need position:fixed to center
+        this.style.position = 'fixed';
+      }
+      if (!this._fitInfo.positionedBy.vertically) {
+        var top = (this._fitHeight - this.offsetHeight) / 2 + this._fitTop;
+        top -= this._fitInfo.margin.top;
+        this.style.top = top + 'px';
+      }
+      if (!this._fitInfo.positionedBy.horizontally) {
+        var left = (this._fitWidth - this.offsetWidth) / 2 + this._fitLeft;
+        left -= this._fitInfo.margin.left;
+        this.style.left = left + 'px';
+      }
+    }
+
+  };
+
+</script>
+<script>
+
+  Polymer.IronOverlayManager = {
+
+    _overlays: [],
+
+    // iframes have a default z-index of 100, so this default should be at least
+    // that.
+    _minimumZ: 101,
+
+    _backdrops: [],
+
+    _applyOverlayZ: function(overlay, aboveZ) {
+      this._setZ(overlay, aboveZ + 2);
+    },
+
+    _setZ: function(element, z) {
+      element.style.zIndex = z;
+    },
+
+    // track overlays for z-index and focus managemant
+    addOverlay: function(overlay) {
+      var minimumZ = Math.max(this.currentOverlayZ(), this._minimumZ);
+      this._overlays.push(overlay);
+      var newZ = this.currentOverlayZ();
+      if (newZ <= minimumZ) {
+        this._applyOverlayZ(overlay, minimumZ);
+      }
+    },
+
+    removeOverlay: function(overlay) {
+      var i = this._overlays.indexOf(overlay);
+      if (i >= 0) {
+        this._overlays.splice(i, 1);
+        this._setZ(overlay, '');
+      }
+    },
+
+    currentOverlay: function() {
+      var i = this._overlays.length - 1;
+      while (this._overlays[i] && !this._overlays[i].opened) {
+        --i;
+      }
+      return this._overlays[i];
+    },
+
+    currentOverlayZ: function() {
+      var z = this._minimumZ;
+      var current = this.currentOverlay();
+      if (current) {
+        var z1 = window.getComputedStyle(current).zIndex;
+        if (!isNaN(z1)) {
+          z = Number(z1);
+        }
+      }
+      return z;
+    },
+
+    /**
+     * Ensures that the minimum z-index of new overlays is at least `minimumZ`.
+     * This does not effect the z-index of any existing overlays.
+     *
+     * @param {number} minimumZ
+     */
+    ensureMinimumZ: function(minimumZ) {
+      this._minimumZ = Math.max(this._minimumZ, minimumZ);
+    },
+
+    focusOverlay: function() {
+      var current = this.currentOverlay();
+      // We have to be careful to focus the next overlay _after_ any current
+      // transitions are complete (due to the state being toggled prior to the
+      // transition). Otherwise, we risk infinite recursion when a transitioning
+      // (closed) overlay becomes the current overlay.
+      //
+      // NOTE: We make the assumption that any overlay that completes a transition
+      // will call into focusOverlay to kick the process back off. Currently:
+      // transitionend -> _applyFocus -> focusOverlay.
+      if (current && !current.transitioning) {
+        current._applyFocus();
+      }
+    },
+
+    trackBackdrop: function(element) {
+      // backdrops contains the overlays with a backdrop that are currently
+      // visible
+      if (element.opened) {
+        this._backdrops.push(element);
+      } else {
+        var index = this._backdrops.indexOf(element);
+        if (index >= 0) {
+          this._backdrops.splice(index, 1);
+        }
+      }
+    },
+
+    getBackdrops: function() {
+      return this._backdrops;
+    }
+
+  };
+
+</script>
+
+
+<script>
+
+/**
+Use `Polymer.IronOverlayBehavior` to implement an element that can be hidden or shown, and displays
+on top of other content. It includes an optional backdrop, and can be used to implement a variety
+of UI controls including dialogs and drop downs. Multiple overlays may be displayed at once.
+
+### Closing and canceling
+
+A dialog may be hidden by closing or canceling. The difference between close and cancel is user
+intent. Closing generally implies that the user acknowledged the content on the overlay. By default,
+it will cancel whenever the user taps outside it or presses the escape key. This behavior is
+configurable with the `no-cancel-on-esc-key` and the `no-cancel-on-outside-click` properties.
+`close()` should be called explicitly by the implementer when the user interacts with a control
+in the overlay element. When the dialog is canceled, the overlay fires an 'iron-overlay-canceled'
+event. Call `preventDefault` on this event to prevent the overlay from closing.
+
+### Positioning
+
+By default the element is sized and positioned to fit and centered inside the window. You can
+position and size it manually using CSS. See `Polymer.IronFitBehavior`.
+
+### Backdrop
+
+Set the `with-backdrop` attribute to display a backdrop behind the overlay. The backdrop is
+appended to `<body>` and is of type `<iron-overlay-backdrop>`. See its doc page for styling
+options.
+
+### Limitations
+
+The element is styled to appear on top of other content by setting its `z-index` property. You
+must ensure no element has a stacking context with a higher `z-index` than its parent stacking
+context. You should place this element as a child of `<body>` whenever possible.
+
+@demo demo/index.html
+@polymerBehavior Polymer.IronOverlayBehavior
+*/
+
+  Polymer.IronOverlayBehaviorImpl = {
+
+    properties: {
+
+      /**
+       * True if the overlay is currently displayed.
+       */
+      opened: {
+        observer: '_openedChanged',
+        type: Boolean,
+        value: false,
+        notify: true
+      },
+
+      /**
+       * True if the overlay was canceled when it was last closed.
+       */
+      canceled: {
+        observer: '_canceledChanged',
+        readOnly: true,
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Set to true to display a backdrop behind the overlay.
+       */
+      withBackdrop: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Set to true to disable auto-focusing the overlay or child nodes with
+       * the `autofocus` attribute` when the overlay is opened.
+       */
+      noAutoFocus: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Set to true to disable canceling the overlay with the ESC key.
+       */
+      noCancelOnEscKey: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Set to true to disable canceling the overlay by clicking outside it.
+       */
+      noCancelOnOutsideClick: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Returns the reason this dialog was last closed.
+       */
+      closingReason: {
+        // was a getter before, but needs to be a property so other
+        // behaviors can override this.
+        type: Object
+      },
+
+      _manager: {
+        type: Object,
+        value: Polymer.IronOverlayManager
+      },
+
+      _boundOnCaptureClick: {
+        type: Function,
+        value: function() {
+          return this._onCaptureClick.bind(this);
+        }
+      },
+
+      _boundOnCaptureKeydown: {
+        type: Function,
+        value: function() {
+          return this._onCaptureKeydown.bind(this);
+        }
+      }
+
+    },
+
+    listeners: {
+      'iron-resize': '_onIronResize'
+    },
+
+    /**
+     * The backdrop element.
+     * @type Node
+     */
+    get backdropElement() {
+      return this._backdrop;
+    },
+
+    get _focusNode() {
+      return Polymer.dom(this).querySelector('[autofocus]') || this;
+    },
+
+    registered: function() {
+      this._backdrop = document.createElement('iron-overlay-backdrop');
+    },
+
+    ready: function() {
+      this._ensureSetup();
+    },
+
+    attached: function() {
+      // Call _openedChanged here so that position can be computed correctly.
+      if (this._callOpenedWhenReady) {
+        this._openedChanged();
+      }
+    },
+
+    detached: function() {
+      this.opened = false;
+      this._completeBackdrop();
+      this._manager.removeOverlay(this);
+    },
+
+    /**
+     * Toggle the opened state of the overlay.
+     */
+    toggle: function() {
+      this.opened = !this.opened;
+    },
+
+    /**
+     * Open the overlay.
+     */
+    open: function() {
+      this.opened = true;
+      this.closingReason = {canceled: false};
+    },
+
+    /**
+     * Close the overlay.
+     */
+    close: function() {
+      this.opened = false;
+      this._setCanceled(false);
+    },
+
+    /**
+     * Cancels the overlay.
+     */
+    cancel: function() {
+      var cancelEvent = this.fire('iron-overlay-canceled', undefined, {cancelable: true});
+      if (cancelEvent.defaultPrevented) {
+        return;
+      }
+
+      this.opened = false;
+      this._setCanceled(true);
+    },
+
+    _ensureSetup: function() {
+      if (this._overlaySetup) {
+        return;
+      }
+      this._overlaySetup = true;
+      this.style.outline = 'none';
+      this.style.display = 'none';
+    },
+
+    _openedChanged: function() {
+      if (this.opened) {
+        this.removeAttribute('aria-hidden');
+      } else {
+        this.setAttribute('aria-hidden', 'true');
+      }
+
+      // wait to call after ready only if we're initially open
+      if (!this._overlaySetup) {
+        this._callOpenedWhenReady = this.opened;
+        return;
+      }
+      if (this._openChangedAsync) {
+        this.cancelAsync(this._openChangedAsync);
+      }
+
+      this._toggleListeners();
+
+      if (this.opened) {
+        this._prepareRenderOpened();
+      }
+
+      // async here to allow overlay layer to become visible.
+      this._openChangedAsync = this.async(function() {
+        // overlay becomes visible here
+        this.style.display = '';
+        // force layout to ensure transitions will go
+        /** @suppress {suspiciousCode} */ this.offsetWidth;
+        if (this.opened) {
+          this._renderOpened();
+        } else {
+          this._renderClosed();
+        }
+        this._openChangedAsync = null;
+      });
+
+    },
+
+    _canceledChanged: function() {
+      this.closingReason = this.closingReason || {};
+      this.closingReason.canceled = this.canceled;
+    },
+
+    _toggleListener: function(enable, node, event, boundListener, capture) {
+      if (enable) {
+        // enable document-wide tap recognizer
+        if (event === 'tap') {
+          Polymer.Gestures.add(document, 'tap', null);
+        }
+        node.addEventListener(event, boundListener, capture);
+      } else {
+        // disable document-wide tap recognizer
+        if (event === 'tap') {
+          Polymer.Gestures.remove(document, 'tap', null);
+        }
+        node.removeEventListener(event, boundListener, capture);
+      }
+    },
+
+    _toggleListeners: function() {
+      if (this._toggleListenersAsync) {
+        this.cancelAsync(this._toggleListenersAsync);
+      }
+      // async so we don't auto-close immediately via a click.
+      this._toggleListenersAsync = this.async(function() {
+        this._toggleListener(this.opened, document, 'tap', this._boundOnCaptureClick, true);
+        this._toggleListener(this.opened, document, 'keydown', this._boundOnCaptureKeydown, true);
+        this._toggleListenersAsync = null;
+      }, 1);
+    },
+
+    // tasks which must occur before opening; e.g. making the element visible
+    _prepareRenderOpened: function() {
+      this._manager.addOverlay(this);
+
+      if (this.withBackdrop) {
+        this.backdropElement.prepare();
+        this._manager.trackBackdrop(this);
+      }
+
+      this._preparePositioning();
+      this.fit();
+      this._finishPositioning();
+    },
+
+    // tasks which cause the overlay to actually open; typically play an
+    // animation
+    _renderOpened: function() {
+      if (this.withBackdrop) {
+        this.backdropElement.open();
+      }
+      this._finishRenderOpened();
+    },
+
+    _renderClosed: function() {
+      if (this.withBackdrop) {
+        this.backdropElement.close();
+      }
+      this._finishRenderClosed();
+    },
+
+    _onTransitionend: function(event) {
+      // make sure this is our transition event.
+      if (event && event.target !== this) {
+        return;
+      }
+      if (this.opened) {
+        this._finishRenderOpened();
+      } else {
+        this._finishRenderClosed();
+      }
+    },
+
+    _finishRenderOpened: function() {
+      // focus the child node with [autofocus]
+      if (!this.noAutoFocus) {
+        this._focusNode.focus();
+      }
+
+      this.fire('iron-overlay-opened');
+
+      this._squelchNextResize = true;
+      this.async(this.notifyResize);
+    },
+
+    _finishRenderClosed: function() {
+      // hide the overlay and remove the backdrop
+      this.resetFit();
+      this.style.display = 'none';
+      this._completeBackdrop();
+      this._manager.removeOverlay(this);
+
+      this._focusNode.blur();
+      // focus the next overlay, if there is one
+      this._manager.focusOverlay();
+
+      this.fire('iron-overlay-closed', this.closingReason);
+
+      this._squelchNextResize = true;
+      this.async(this.notifyResize);
+    },
+
+    _completeBackdrop: function() {
+      if (this.withBackdrop) {
+        this._manager.trackBackdrop(this);
+        this.backdropElement.complete();
+      }
+    },
+
+    _preparePositioning: function() {
+      this.style.transition = this.style.webkitTransition = 'none';
+      this.style.transform = this.style.webkitTransform = 'none';
+      this.style.display = '';
+    },
+
+    _finishPositioning: function() {
+      this.style.display = 'none';
+      this.style.transform = this.style.webkitTransform = '';
+      // force layout to avoid application of transform
+      /** @suppress {suspiciousCode} */ this.offsetWidth;
+      this.style.transition = this.style.webkitTransition = '';
+    },
+
+    _applyFocus: function() {
+      if (this.opened) {
+        if (!this.noAutoFocus) {
+          this._focusNode.focus();
+        }
+      } else {
+        this._focusNode.blur();
+        this._manager.focusOverlay();
+      }
+    },
+
+    _onCaptureClick: function(event) {
+      if (!this.noCancelOnOutsideClick &&
+          this._manager.currentOverlay() === this &&
+          Polymer.dom(event).path.indexOf(this) === -1) {
+        this.cancel();
+      }
+    },
+
+    _onCaptureKeydown: function(event) {
+      var ESC = 27;
+      if (!this.noCancelOnEscKey && (event.keyCode === ESC)) {
+        this.cancel();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }
+    },
+
+    _onIronResize: function() {
+      if (this._squelchNextResize) {
+        this._squelchNextResize = false;
+        return;
+      }
+      if (this.opened) {
+        this.refit();
+      }
+    }
+
+/**
+ * Fired after the `iron-overlay` opens.
+ * @event iron-overlay-opened
+ */
+
+/**
+ * Fired when the `iron-overlay` is canceled, but before it is closed.
+ * Cancel the event to prevent the `iron-overlay` from closing.
+ * @event iron-overlay-canceled
+ */
+
+/**
+ * Fired after the `iron-overlay` closes.
+ * @event iron-overlay-closed
+ * @param {{canceled: (boolean|undefined)}} set to the `closingReason` attribute
+ */
+  };
+
+  /** @polymerBehavior */
+  Polymer.IronOverlayBehavior = [Polymer.IronFitBehavior, Polymer.IronResizableBehavior, Polymer.IronOverlayBehaviorImpl];
+
+
 </script>
 <script>
     var VaadinCharts = VaadinCharts || {};
@@ -22338,296 +22893,148 @@ value. `setMax` should move the slider to the maximum value.
 
   </script>
 </dom-module>
-<dom-module id="iron-overlay-backdrop" assetpath="../bower_components/iron-overlay-behavior/">
-
-  <style>
-
-    :host {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: var(--iron-overlay-backdrop-background-color, #000);
-      opacity: 0;
-      transition: opacity 0.2s;
-
-      @apply(--iron-overlay-backdrop);
-    }
-
-    :host([opened]) {
-      opacity: var(--iron-overlay-backdrop-opacity, 0.6);
-
-      @apply(--iron-overlay-backdrop-opened);
-    }
-
-  </style>
-
-  <template>
-    <content></content>
-  </template>
-
-</dom-module>
-
-<script>
-
-(function() {
-
-  Polymer({
-
-    is: 'iron-overlay-backdrop',
-
-    properties: {
-
-      /**
-       * Returns true if the backdrop is opened.
-       */
-      opened: {
-        readOnly: true,
-        reflectToAttribute: true,
-        type: Boolean,
-        value: false
-      },
-
-      _manager: {
-        type: Object,
-        value: Polymer.IronOverlayManager
-      }
-
-    },
-
-    /**
-     * Appends the backdrop to document body and sets its `z-index` to be below the latest overlay.
-     */
-    prepare: function() {
-      if (!this.parentNode) {
-        Polymer.dom(document.body).appendChild(this);
-        this.style.zIndex = this._manager.currentOverlayZ() - 1;
-      }
-    },
-
-    /**
-     * Shows the backdrop if needed.
-     */
-    open: function() {
-      // only need to make the backdrop visible if this is called by the first overlay with a backdrop
-      if (this._manager.getBackdrops().length < 2) {
-        this._setOpened(true);
-      }
-    },
-
-    /**
-     * Hides the backdrop if needed.
-     */
-    close: function() {
-      // only need to make the backdrop invisible if this is called by the last overlay with a backdrop
-      if (this._manager.getBackdrops().length < 2) {
-        this._setOpened(false);
-      }
-    },
-
-    /**
-     * Removes the backdrop from document body if needed.
-     */
-    complete: function() {
-      // only remove the backdrop if there are no more overlays with backdrops
-      if (this._manager.getBackdrops().length === 0 && this.parentNode) {
-        Polymer.dom(this.parentNode).removeChild(this);
-      }
-    }
-
-  });
-
-})();
-
-</script>
 <dom-module id="paper-toast" assetpath="../bower_components/paper-toast/">
+  <style>
+    :host {
+      display: inline-block;
+      position: fixed;
+
+      background: #323232;
+      color: #f1f1f1;
+      min-height: 48px;
+      min-width: 288px;
+      padding: 16px 24px 12px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+      border-radius: 2px;
+      bottom: 12px;
+      left: 12px;
+      font-size: 14px;
+      cursor: default;
+
+      -webkit-transition: visibility 0.3s, -webkit-transform 0.3s;
+      transition: visibility 0.3s, transform 0.3s;
+
+      -webkit-transform: translateY(100px);
+      transform: translateY(100px);
+
+      visibility: hidden;
+    }
+
+    :host(.capsule) {
+      border-radius: 24px;
+    }
+
+    :host(.fit-bottom) {
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      min-width: 0;
+      border-radius: 0;
+    }
+
+    :host(.paper-toast-open){
+      visibility: visible;
+
+      -webkit-transform: translateY(0px);
+      transform: translateY(0px);
+    }
+  </style>
   <template>
-    <style>
-      :host {
-        display: block;
-        position: fixed;
-        background-color: var(--paper-toast-background-color, #323232);
-        color: var(--paper-toast-color, #f1f1f1);
-        min-height: 48px;
-        min-width: 288px;
-        padding: 16px 24px 12px;
-        box-sizing: border-box;
-        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-        border-radius: 2px;
-        left: 0;
-        bottom: 0;
-        margin: 12px;
-        font-size: 14px;
-        cursor: default;
-        -webkit-transition: visibility 0.3s, -webkit-transform 0.3s, opacity 0.3s;
-        transition: visibility 0.3s, transform 0.3s, opacity 0.3s;
-        visibility: hidden;
-        opacity: 0;
-        -webkit-transform: translateY(100px);
-        transform: translateY(100px);
-      }
-
-      :host(.capsule) {
-        border-radius: 24px;
-      }
-
-      :host(.fit-bottom) {
-        width: 100%;
-        min-width: 0;
-        border-radius: 0;
-        margin: 0;
-      }
-
-      :host(.paper-toast-open) {
-        visibility: visible;
-        opacity: 1;
-        -webkit-transform: translateY(0px);
-        transform: translateY(0px);
-      }
-    </style>
-
     <span id="label">{{text}}</span>
     <content></content>
   </template>
-
-  <script>
-    (function() {
-      // Keeps track of the toast currently opened.
-      var currentToast = null;
-
-      Polymer({
-        is: 'paper-toast',
-
-        behaviors: [
-          Polymer.IronOverlayBehavior
-        ],
-
-        properties: {
-          /**
-           * The duration in milliseconds to show the toast.
-           * Set to `0`, a negative number, or `Infinity`, to disable the
-           * toast auto-closing.
-           */
-          duration: {
-            type: Number,
-            value: 3000
-          },
-
-          /**
-           * The text to display in the toast.
-           */
-          text: {
-            type: String,
-            value: ''
-          },
-
-          /**
-           * Overridden from `IronOverlayBehavior`.
-           * Set to false to enable closing of the toast by clicking outside it.
-           */
-          noCancelOnOutsideClick: {
-            type: Boolean,
-            value: true
-          },
-        },
-
-        /**
-         * Read-only. Deprecated. Use `opened` from `IronOverlayBehavior`.
-         * @property visible
-         * @deprecated
-         */
-        get visible() {
-          console.warn('`visible` is deprecated, use `opened` instead');
-          return this.opened;
-        },
-
-        /**
-         * Read-only. Can auto-close if duration is a positive finite number.
-         * @property _canAutoClose
-         */
-        get _canAutoClose() {
-          return this.duration > 0 && this.duration !== Infinity;
-        },
-
-        created: function() {
-          Polymer.IronA11yAnnouncer.requestAvailability();
-        },
-
-        /**
-         * Show the toast. Same as `open()` from `IronOverlayBehavior`.
-         */
-        show: function() {
-          this.open();
-        },
-
-        /**
-         * Hide the toast. Same as `close()` from `IronOverlayBehavior`.
-         */
-        hide: function() {
-          this.close();
-        },
-
-        /**
-         * Overridden from `IronOverlayBehavior`.
-         * Called when the value of `opened` changes.
-         */
-        _openedChanged: function() {
-          if (this.opened) {
-            if (currentToast && currentToast !== this) {
-              currentToast.close();
-            }
-            currentToast = this;
-            this.fire('iron-announce', {
-              text: this.text
-            });
-            if (this._canAutoClose) {
-              this.debounce('close', this.close, this.duration);
-            }
-          } else if (currentToast === this) {
-            currentToast = null;
-          }
-          Polymer.IronOverlayBehaviorImpl._openedChanged.apply(this, arguments);
-        },
-
-        /**
-         * Overridden from `IronOverlayBehavior`.
-         */
-        _renderOpened: function() {
-          this.classList.add('paper-toast-open');
-        },
-
-        /**
-         * Overridden from `IronOverlayBehavior`.
-         */
-        _renderClosed: function() {
-          this.classList.remove('paper-toast-open');
-        },
-
-        /**
-         * Overridden from `IronOverlayBehavior`.
-         * iron-fit-behavior will set the inline style position: static, which
-         * causes the toast to be rendered incorrectly when opened by default.
-         */
-        _onIronResize: function() {
-          Polymer.IronOverlayBehaviorImpl._onIronResize.apply(this, arguments);
-          if (this.opened) {
-            // Make sure there is no inline style for position.
-            this.style.position = '';
-          }
-        }
-
-        /**
-         * Fired when `paper-toast` is opened.
-         *
-         * @event 'iron-announce'
-         * @param {Object} detail
-         * @param {String} detail.text The text that will be announced.
-         */
-      });
-    })();
-  </script>
 </dom-module>
+<script>
+(function() {
+
+  var PaperToast = Polymer({
+    is: 'paper-toast',
+
+    properties: {
+      /**
+       * The duration in milliseconds to show the toast.
+       */
+      duration: {
+        type: Number,
+        value: 3000
+      },
+
+      /**
+       * The text to display in the toast.
+       */
+      text: {
+        type: String,
+        value: ""
+      },
+
+      /**
+       * True if the toast is currently visible.
+       */
+      visible: {
+        type: Boolean,
+        readOnly: true,
+        value: false,
+        observer: '_visibleChanged'
+      }
+    },
+
+    created: function() {
+      Polymer.IronA11yAnnouncer.requestAvailability();
+    },
+
+    ready: function() {
+      this.async(function() {
+        this.hide();
+      });
+    },
+
+    /**
+     * Show the toast.
+     * @method show
+     */
+    show: function() {
+      if (PaperToast.currentToast) {
+        PaperToast.currentToast.hide();
+      }
+      PaperToast.currentToast = this;
+      this.removeAttribute('aria-hidden');
+      this._setVisible(true);
+      this.fire('iron-announce', {
+        text: this.text
+      });
+      this.debounce('hide', this.hide, this.duration);
+    },
+
+    /**
+     * Hide the toast
+     */
+    hide: function() {
+      this.setAttribute('aria-hidden', 'true');
+      this._setVisible(false);
+    },
+
+    /**
+     * Toggle the opened state of the toast.
+     * @method toggle
+     */
+    toggle: function() {
+      if (!this.visible) {
+        this.show();
+      } else {
+        this.hide();
+      }
+    },
+
+    _visibleChanged: function(visible) {
+      this.toggleClass('paper-toast-open', visible);
+    }
+  });
+
+  PaperToast.currentToast = null;
+
+})();
+</script>
 <dom-module id="paper-header-panel" assetpath="../bower_components/paper-header-panel/">
   <template>
     <style>
@@ -25779,60 +26186,9 @@ value. `setMax` should move the slider to the maximum value.
 <g id="zoom-out"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"></path></g>
 </defs></svg>
 </iron-iconset-svg>
-<dom-module id="paper-input-char-counter" assetpath="../bower_components/paper-input/">
-  <template>
-    <style>
-      :host {
-        display: inline-block;
-        float: right;
-
-        @apply(--paper-font-caption);
-        @apply(--paper-input-char-counter);
-      }
-
-      :host-context([dir="rtl"]) {
-        float: left;
-      }
-    </style>
-
-    <span>[[_charCounterStr]]</span>
-  </template>
-</dom-module>
-
-<script>
-  Polymer({
-    is: 'paper-input-char-counter',
-
-    behaviors: [
-      Polymer.PaperInputAddonBehavior
-    ],
-
-    properties: {
-      _charCounterStr: {
-        type: String,
-        value: '0'
-      }
-    },
-
-    update: function(state) {
-      if (!state.inputElement) {
-        return;
-      }
-
-      state.value = state.value || '';
-
-      // Account for the textarea's new lines.
-      var str = state.value.replace(/(\r\n|\n|\r)/g, '--').length;
-
-      if (state.inputElement.hasAttribute('maxlength')) {
-        str += '/' + state.inputElement.getAttribute('maxlength');
-      }
-      this._charCounterStr = str;
-    }
-  });
-</script>
 <dom-module id="paper-input-container" assetpath="../bower_components/paper-input/">
   <template>
+
     <style>
       :host {
         display: block;
@@ -25861,14 +26217,14 @@ value. `setMax` should move the slider to the maximum value.
       }
 
       .focused-line {
-        @apply(--layout-fit);
-
-        background: var(--paper-input-container-focus-color, --default-primary-color);
         height: 2px;
+
         -webkit-transform-origin: center center;
         transform-origin: center center;
         -webkit-transform: scale3d(0,1,1);
         transform: scale3d(0,1,1);
+
+        background: var(--paper-input-container-focus-color, --default-primary-color);
 
         @apply(--paper-input-container-underline-focus);
       }
@@ -25884,6 +26240,7 @@ value. `setMax` should move the slider to the maximum value.
 
       .underline.is-invalid .focused-line {
         background: var(--paper-input-container-invalid-color, --google-red-500);
+
         -webkit-transform: none;
         transform: none;
         -webkit-transition: -webkit-transform 0.25s;
@@ -25893,8 +26250,6 @@ value. `setMax` should move the slider to the maximum value.
       }
 
       .unfocused-line {
-        @apply(--layout-fit);
-
         height: 1px;
         background: var(--paper-input-container-color, --secondary-text-color);
 
@@ -25915,10 +26270,9 @@ value. `setMax` should move the slider to the maximum value.
       }
 
       .input-content {
-        @apply(--layout-horizontal);
-        @apply(--layout-center);
-
         position: relative;
+        @apply(--layout-horizontal);
+        @apply(--layout-end);
       }
 
       .input-content ::content label,
@@ -25941,6 +26295,7 @@ value. `setMax` should move the slider to the maximum value.
         transform: translateY(-75%) scale(0.75);
         -webkit-transition: -webkit-transform 0.25s;
         transition: transform 0.25s;
+
         -webkit-transform-origin: left top;
         transform-origin: left top;
 
@@ -25949,7 +26304,6 @@ value. `setMax` should move the slider to the maximum value.
         width: 133%;
 
         @apply(--paper-transition-easing);
-        @apply(--paper-input-container-label-floating);
       }
 
       :host-context([dir="rtl"]) .input-content.label-is-floating ::content label,
@@ -26040,18 +26394,18 @@ value. `setMax` should move the slider to the maximum value.
       <div class="label-and-input-container" id="labelAndInputContainer">
         <content select=":not([add-on]):not([prefix]):not([suffix])"></content>
       </div>
-
       <content select="[suffix]"></content>
     </div>
 
     <div class$="[[_computeUnderlineClass(focused,invalid)]]">
-      <div class="unfocused-line"></div>
-      <div class="focused-line"></div>
+      <div class="unfocused-line fit"></div>
+      <div class="focused-line fit"></div>
     </div>
 
     <div class$="[[_computeAddOnContentClass(focused,invalid)]]">
       <content id="addOnContent" select="[add-on]"></content>
     </div>
+
   </template>
 </dom-module>
 
@@ -26200,6 +26554,21 @@ value. `setMax` should move the slider to the maximum value.
       } else {
         this._handleValue(this._inputElement);
       }
+
+      this._numberOfPrefixNodes = 0;
+      this._prefixObserver = Polymer.dom(this.$.prefix).observeNodes(
+          function(mutations) {
+            // Keep track whether there's at least one prefix node, since it
+            // affects laying out the floating label.
+            this._numberOfPrefixNodes += mutations.addedNodes.length -
+                mutations.removedNodes.length;
+          }.bind(this));
+    },
+
+    detached: function() {
+      if (this._prefixObserver) {
+        Polymer.dom(this.$.prefix).unobserveNodes(this._prefixObserver);
+      }
     },
 
     _onAddonAttached: function(event) {
@@ -26291,14 +26660,15 @@ value. `setMax` should move the slider to the maximum value.
 
         if (alwaysFloatLabel || _inputHasContent) {
           cls += ' label-is-floating';
-          // If the label is floating, ignore any offsets that may have been
-          // applied from a prefix element.
-          this.$.labelAndInputContainer.style.position = 'static';
-
           if (invalid) {
             cls += ' is-invalid';
           } else if (focused) {
             cls += " label-is-highlighted";
+          }
+          // If a prefix element exists, the label has a horizontal offset
+          // which needs to be undone when displayed as a floating label.
+          if (this._numberOfPrefixNodes > 0) {
+            this.$.labelAndInputContainer.style.position = 'static';
           }
         } else {
           // When the label is not floating, it should overlap the input element.
@@ -26337,6 +26707,7 @@ value. `setMax` should move the slider to the maximum value.
 </script>
 <dom-module id="paper-input-error" assetpath="../bower_components/paper-input/">
   <template>
+
     <style>
       :host {
         display: inline-block;
@@ -26357,6 +26728,7 @@ value. `setMax` should move the slider to the maximum value.
     </style>
 
     <content></content>
+
   </template>
 </dom-module>
 
@@ -26384,8 +26756,63 @@ value. `setMax` should move the slider to the maximum value.
     }
   });
 </script>
+<dom-module id="paper-input-char-counter" assetpath="../bower_components/paper-input/">
+  <template>
+
+    <style>
+      :host {
+        display: inline-block;
+        float: right;
+
+        @apply(--paper-font-caption);
+        @apply(--paper-input-char-counter);
+      }
+
+      :host-context([dir="rtl"]) {
+        float: left;
+      }
+    </style>
+
+    <span>[[_charCounterStr]]</span>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: 'paper-input-char-counter',
+
+    behaviors: [
+      Polymer.PaperInputAddonBehavior
+    ],
+
+    properties: {
+      _charCounterStr: {
+        type: String,
+        value: '0'
+      }
+    },
+
+    update: function(state) {
+      if (!state.inputElement) {
+        return;
+      }
+
+      state.value = state.value || '';
+
+      // Account for the textarea's new lines.
+      var str = state.value.replace(/(\r\n|\n|\r)/g, '--').length;
+
+      if (state.inputElement.hasAttribute('maxlength')) {
+        str += '/' + state.inputElement.getAttribute('maxlength');
+      }
+      this._charCounterStr = str;
+    }
+  });
+</script>
 <dom-module id="paper-input" assetpath="../bower_components/paper-input/">
   <template>
+
     <style>
       :host {
         display: block;
@@ -26414,7 +26841,7 @@ value. `setMax` should move the slider to the maximum value.
 
       <label hidden$="[[!label]]">[[label]]</label>
 
-      <input is="iron-input" id="input" aria-labelledby$="[[_ariaLabelledBy]]" aria-describedby$="[[_ariaDescribedBy]]" disabled$="[[disabled]]" bind-value="{{value}}" invalid="{{invalid}}" prevent-invalid-input="[[preventInvalidInput]]" allowed-pattern="[[allowedPattern]]" validator="[[validator]]" type$="[[type]]" pattern$="[[pattern]]" required$="[[required]]" autocomplete$="[[autocomplete]]" autofocus$="[[autofocus]]" inputmode$="[[inputmode]]" minlength$="[[minlength]]" maxlength$="[[maxlength]]" min$="[[min]]" max$="[[max]]" step$="[[step]]" name$="[[name]]" placeholder$="[[placeholder]]" readonly$="[[readonly]]" list$="[[list]]" size$="[[size]]" autocapitalize$="[[autocapitalize]]" autocorrect$="[[autocorrect]]" on-change="_onChange" tabindex$="[[tabindex]]" autosave$="[[autosave]]" results$="[[results]]" accept$="[[accept]]" multiple$="[[multiple]]">
+      <input is="iron-input" id="input" aria-labelledby$="[[_ariaLabelledBy]]" aria-describedby$="[[_ariaDescribedBy]]" disabled$="[[disabled]]" bind-value="{{value}}" invalid="{{invalid}}" prevent-invalid-input="[[preventInvalidInput]]" allowed-pattern="[[allowedPattern]]" validator="[[validator]]" type$="[[type]]" pattern$="[[pattern]]" required$="[[required]]" autocomplete$="[[autocomplete]]" autofocus$="[[autofocus]]" inputmode$="[[inputmode]]" minlength$="[[minlength]]" maxlength$="[[maxlength]]" min$="[[min]]" max$="[[max]]" step$="[[step]]" name$="[[name]]" placeholder$="[[placeholder]]" readonly$="[[readonly]]" list$="[[list]]" size$="[[size]]" autocapitalize$="[[autocapitalize]]" autocorrect$="[[autocorrect]]" on-change="_onChange" autosave$="[[autosave]]" results$="[[results]]" accept$="[[accept]]" multiple$="[[multiple]]">
 
       <content select="[suffix]"></content>
 
@@ -26427,6 +26854,7 @@ value. `setMax` should move the slider to the maximum value.
       </template>
 
     </paper-input-container>
+
   </template>
 </dom-module>
 
@@ -26436,7 +26864,8 @@ value. `setMax` should move the slider to the maximum value.
 
     behaviors: [
       Polymer.IronFormElementBehavior,
-      Polymer.PaperInputBehavior
+      Polymer.PaperInputBehavior,
+      Polymer.IronControlState
     ]
   });
 </script>
@@ -26717,14 +27146,15 @@ value. `setMax` should move the slider to the maximum value.
       }
       
       @media (max-width: 600px) {
-        #content .merchants {
-          margin-bottom: 12px;
+        .merchants paper-input {
+          padding-top: 0;
+          padding-bottom: 24px;
         }
-        #content .total,
-        #content .status {
+        .total,
+        .status {
           display: none;
         }
-        #content .date paper-input {
+        .date paper-input {
           width: 45%;
           padding-bottom: 36px;
         }
@@ -27197,6 +27627,109 @@ value. `setMax` should move the slider to the maximum value.
      *     externalChange: true if change occured in different window.
      */
   });
+
+</script>
+<dom-module id="iron-overlay-backdrop" assetpath="../bower_components/iron-overlay-behavior/">
+
+  <style>
+
+    :host {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: var(--iron-overlay-backdrop-background-color, #000);
+      opacity: 0;
+      transition: opacity 0.2s;
+
+      @apply(--iron-overlay-backdrop);
+    }
+
+    :host([opened]) {
+      opacity: var(--iron-overlay-backdrop-opacity, 0.6);
+
+      @apply(--iron-overlay-backdrop-opened);
+    }
+
+  </style>
+
+  <template>
+    <content></content>
+  </template>
+
+</dom-module>
+
+<script>
+
+(function() {
+
+  Polymer({
+
+    is: 'iron-overlay-backdrop',
+
+    properties: {
+
+      /**
+       * Returns true if the backdrop is opened.
+       */
+      opened: {
+        readOnly: true,
+        reflectToAttribute: true,
+        type: Boolean,
+        value: false
+      },
+
+      _manager: {
+        type: Object,
+        value: Polymer.IronOverlayManager
+      }
+
+    },
+
+    /**
+     * Appends the backdrop to document body and sets its `z-index` to be below the latest overlay.
+     */
+    prepare: function() {
+      if (!this.parentNode) {
+        Polymer.dom(document.body).appendChild(this);
+        this.style.zIndex = this._manager.currentOverlayZ() - 1;
+      }
+    },
+
+    /**
+     * Shows the backdrop if needed.
+     */
+    open: function() {
+      // only need to make the backdrop visible if this is called by the first overlay with a backdrop
+      if (this._manager.getBackdrops().length < 2) {
+        this._setOpened(true);
+      }
+    },
+
+    /**
+     * Hides the backdrop if needed.
+     */
+    close: function() {
+      // only need to make the backdrop invisible if this is called by the last overlay with a backdrop
+      if (this._manager.getBackdrops().length < 2) {
+        this._setOpened(false);
+      }
+    },
+
+    /**
+     * Removes the backdrop from document body if needed.
+     */
+    complete: function() {
+      // only remove the backdrop if there are no more overlays with backdrops
+      if (this._manager.getBackdrops().length === 0 && this.parentNode) {
+        Polymer.dom(this.parentNode).removeChild(this);
+      }
+    }
+
+  });
+
+})();
 
 </script>
 <dom-module id="vaadin-license-box" assetpath="../bower_components/vaadin-license-checker/">
@@ -28290,6 +28823,7 @@ value. `setMax` should move the slider to the maximum value.
       </template>
 
     </paper-input-container>
+
   </template>
 </dom-module>
 
@@ -28344,11 +28878,7 @@ value. `setMax` should move the slider to the maximum value.
 
     _ariaDescribedByChanged: function(ariaDescribedBy) {
       this.$.input.textarea.setAttribute('aria-describedby', ariaDescribedBy);
-    },
-
-    get _focusableElement() {
-      return this.$.input.textarea;
-    },
+    }
   });
 </script>
 <dom-module id="paper-button" assetpath="../bower_components/paper-button/">
@@ -29347,7 +29877,7 @@ value. `setMax` should move the slider to the maximum value.
         display: inline;
       }
       
-      .action-menu {
+      .update-button {
         position: absolute;
         top: 0;
         right: 0;
@@ -29355,7 +29885,7 @@ value. `setMax` should move the slider to the maximum value.
         color: var(--accent-color);
       }
       
-      .content.has-receipt .action-menu {
+      .content.has-receipt .update-button {
         display: block;
       }
       
@@ -29378,12 +29908,7 @@ value. `setMax` should move the slider to the maximum value.
     <span class="caption">Receipt</span>
 
     <div id="content" class="content">
-      <paper-menu-button class="action-menu">
-        <paper-icon-button icon="vaadin-icons:ellipsis-v" class="dropdown-trigger"></paper-icon-button>
-        <paper-menu class="dropdown-content">
-          <paper-item on-tap="_fireUpload">Upload new receipt</paper-item>
-        </paper-menu>
-      </paper-menu-button>
+      <paper-icon-button icon="cloud-upload" class="update-button" on-tap="_fireUpload"></paper-icon-button>
 
       <paper-button on-tap="_fireUpload" class="upload-button">
         <iron-icon icon="vaadin-icons:upload"></iron-icon>
@@ -29523,6 +30048,10 @@ value. `setMax` should move the slider to the maximum value.
         min-height: 64px;
       }
       
+      paper-button[hidden] {
+        display: none;
+      }
+      
       #error {
         color: red;
       }
@@ -29565,7 +30094,7 @@ value. `setMax` should move the slider to the maximum value.
         #dialog {
           width: 100vw;
           min-height: 100vh;
-          padding: 0;
+          padding: 0 0 60px 0;
         }
       }
     </style>
@@ -29597,7 +30126,7 @@ value. `setMax` should move the slider to the maximum value.
       <div class="buttons-layout">
         <paper-button raised="" on-tap="_save" class="save-button">Save</paper-button>
         <paper-button on-tap="close" class="cancel-button">Cancel</paper-button>
-        <paper-button on-tap="_delete" id="delete" class="delete-button right-justify">Delete
+        <paper-button on-tap="_delete" id="delete" class="delete-button">Delete
         </paper-button>
       </div>
     </paper-dialog>
@@ -29683,6 +30212,7 @@ value. `setMax` should move the slider to the maximum value.
             this.$.receiptupload.setAttribute('required', true);
             this._resetValidationErrors();
           }
+
           this.$.delete.hidden = !(this.expense.id && this.expense.status === 'new');
         },
 
@@ -30842,7 +31372,7 @@ value. `setMax` should move the slider to the maximum value.
     <expense-service id="service" service="{{service}}" logged-in="{{loggedIn}}" online="{{online}}"></expense-service>
 
     <platinum-sw-register auto-register="" clients-claim="" skip-waiting="" on-service-worker-installed="_cachingComplete">
-      <platinum-sw-cache default-cache-strategy="fastest" cache-config-file="cache-config.json">
+      <platinum-sw-cache default-cache-strategy="networkFirst" cache-config-file="cache-config.json">
       </platinum-sw-cache>
     </platinum-sw-register>
 
